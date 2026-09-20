@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "Berikut hasil verifikasi tampilan analisis SafeSign:\n\n1.  **Lencana Risiko Tinggi (HIGH RISK):** **Ya, sangat menonjol.** Terdapat kotak peringatan berwarna merah muda (pink) dengan ikon lingkaran merah solid dan teks \"Risiko tinggi — jangan tanda tangan tanpa bantuan\" yang jelas dan kontras.\n2.  **Daftar Bendera Merah (Red Flags):** **Ya, lengkap.** Setiap poin risiko mencantumkan label \"KLAUSULNYA\" diikuti kutipan teks kontrak (dalam tanda petik dan *italic*) serta penjelasan singkat di bawahnya.\n3.  **Penafian (Disclaimer):** **Ya, terlihat jelas.** Terdapat kotak kuning bertuliskan \"PENTING\" yang menjelaskan bahwa ini bukan saran hukum formal.\n4.  **Bagian Obrolan (Chat):** **Ya, ada.** Terdapat bagian \"Tanya tentang kontrak Anda\" dengan input teks, tombol \"Kirim\", dan beberapa chip balasan cepat (quick-reply chips) seperti \"Apa artinya ini?\" dan \"Apakah ini berbahaya?\".\n5.  **Cacat Layout:** **Tidak ada cacat layout yang signifikan.** Tata letak bersih, hierarki informasi (Header -> Peringatan -> Ringkasan -> Detail Klausul -> Langkah Selanjutnya -> Chat -> Footer) logis dan mudah dibaca. Terdapat sedikit elemen \"N\" hitam di margin kiri tengah yang tampak seperti penanda gulir atau artefak tangkapan layar, tetapi tidak mengganggu fungsionalitas UI utama.\n\n**Kesimpulan:** Tampilan ini sudah sangat baik, informatif, dan memenuhi kriteria UX untuk memberikan peringatan keamanan kepada pengguna.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1789874676,
+  "id": "2026092011241253bfcec00db54855",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "2026092011241253bfcec00db54855",
+  "usage": {
+    "completion_tokens": 448,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 5891,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "total_tokens": 6339
+  }
+}
