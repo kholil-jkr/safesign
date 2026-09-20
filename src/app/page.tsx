@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AnalysisResultView } from "@/components/safesign/AnalysisResultView";
 import { ChatBox } from "@/components/safesign/ChatBox";
 import { LanguageSwitcher } from "@/components/safesign/LanguageSwitcher";
+import { UploadZone } from "@/components/safesign/UploadZone";
 import { HELP_RESOURCES } from "@/components/safesign/resources";
 import {
   detectLangFromLocale,
@@ -82,6 +83,16 @@ export default function SafeSignPage() {
     setContractText(SAMPLE_CONTRACTS[pick] ?? SAMPLE_CONTRACTS.en);
     setErrorKey(null);
   }, [lang, sampleIndex]);
+
+  const handleExtracted = useCallback((text: string, _info: { pages: number; truncated: boolean }) => {
+    // Append to (or fill) the editable textarea so the user can review
+    // and correct the OCR result before analysing.
+    setContractText((prev) => {
+      const merged = prev.trim() ? `${prev}\n\n${text}` : text;
+      return merged.slice(0, MAX_CHARS);
+    });
+    setErrorKey(null);
+  }, []);
 
   const handleAnalyze = useCallback(async () => {
     const text = contractText.trim();
@@ -205,6 +216,21 @@ export default function SafeSignPage() {
               <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
                 {dict.inputHint}
               </p>
+
+              {/* Upload zone: camera / photos / files / drag & drop / paste / link */}
+              <div className="mt-4">
+                <UploadZone
+                  dict={dict}
+                  disabled={phase === "analyzing"}
+                  onExtracted={handleExtracted}
+                />
+              </div>
+
+              <div className="my-4 flex items-center gap-3" aria-hidden="true">
+                <span className="h-px flex-1 bg-slate-200" />
+                <span className="text-xs font-medium text-slate-400">{dict.orPasteDivider}</span>
+                <span className="h-px flex-1 bg-slate-200" />
+              </div>
 
               <Textarea
                 id="contract-input"

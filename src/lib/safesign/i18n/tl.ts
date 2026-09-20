@@ -9,15 +9,47 @@ export const tl: Dictionary = {
     "I-paste ang kontrata mo sa anumang wika. Makakuha ng buod sa simpleng wika, babala sa mga delikadong klabsa, at mga susunod na hakbang — libre, agad-agad, walang registration.",
   howItWorksTitle: "Paano ito gumagana",
   howItWorks: [
-    "I-paste ang teksto ng kontrata ng trabaho mo (anumang wika).",
+    "Mag-upload ng litrato o file ng kontrata mo (o i-paste ang teksto) — anumang wika.",
     "Binabasa ng SafeSign ang kontrata at tinitingnan ito laban sa listahan ng mga kilalang klabsang pangsasamantala.",
     "Makakakuha ka ng risk rating, paliwanag sa simpleng wika, at kung saan makakakuha ng tunay na tulong.",
   ],
   inputLabel: "Kontrata mo",
   inputHint:
-    "Kopyahin ang teksto ng kontrata (mula sa litrato, PDF, mensahe sa WhatsApp, o papel) at i-paste dito. Anumang wika ay pwede.",
+    "Kumuha ng litrato, mag-upload ng file (PDF, Word, litrato), o i-paste ang teksto ng kontrata sa ibaba. Anumang wika ay pwede.",
   inputPlaceholder: "I-paste ang teksto ng kontrata ng trabaho mo dito (anumang wika)…",
   charCount: "{n} karakter",
+  uploadTitle: "O i-upload ang kontrata mo",
+  uploadCamera: "Camera",
+  uploadPhoto: "Mga litrato",
+  uploadFile: "File",
+  uploadFormatsHint:
+    "Litrato (JPG/PNG), PDF, Word (.docx), o TXT — pwedeng maraming file o pahina nang sabay-sabay.",
+  uploadCloudHint:
+    "Tip: maaari mong pumili ng files mula sa Google Drive, iCloud, OneDrive, o mga dokumento sa WhatsApp gamit ang file picker.",
+  uploadFromLink: "Kunin na lang sa link",
+  linkPlaceholder: "I-paste ang link ng kontrata (Google Drive, Dropbox, o direct link)…",
+  linkImport: "Kunin",
+  readingProgress: "Binabasa ang pahina {n} ng {m}…",
+  readingFile: "Binabasa ang {name}…",
+  orPasteDivider: "o i-paste mismo ang teksto",
+  extractDone:
+    "Nabasa ang teksto mula sa {n} pahina at nasa kahon sa ibaba na — pakitingnan muna nang maikli, saka pindutin ang “Suriin ang kontrata ko”.",
+  extractPartial:
+    "Ang unang {n} pahina lamang ang nabasa, para mabilis at nakatuon ang pagsusuri.",
+  ocrNoText:
+    "Walang nabasang teksto sa litrato. Subukan ulit nang mas malinaw ang kuha, sapat ang liwanag, at tinama tuwid ang angulo mula taas ng pahina.",
+  uploadFailed: "Hindi mabasa ang file na ito. Pakisubukan ulit, o i-paste ang teksto.",
+  uploadUnsupported:
+    "Hindi suportado ang uri ng file na ito. Gumamit ng litrato (JPG/PNG), PDF, Word (.docx), o TXT.",
+  uploadTooLarge: "Masyadong malaki ang file (hanggang 15 MB lamang).",
+  uploadTooMany:
+    "Masyadong maraming file (hanggang {n} lamang). I-upload na lang ang pinakamahalagang pahina.",
+  linkInvalid:
+    "Hindi magagamit ang link na ito. Gumamit ng direct link sa file, o Google Drive / Dropbox share link.",
+  linkFailed:
+    "Hindi ma-download ang file mula sa link na ito. Siguraduhing public ang link (“anyone with the link”), o i-download muna ang file saka i-upload dito.",
+  uploadPrivacy:
+    "Ang mga litrato at file ay ginagamit lamang para mabasa ang teksto, sa session na ito lamang. Walang itinatago.",
   trySample: "Subukan ang halimbawang kontrata",
   clearButton: "Burahin",
   analyzeButton: "Suriin ang kontrata ko",

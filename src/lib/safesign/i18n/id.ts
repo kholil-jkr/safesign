@@ -9,15 +9,47 @@ export const id: Dictionary = {
     "Tempelkan kontrak Anda dalam bahasa apa pun. Dapatkan ringkasan bahasa sederhana, peringatan klausul berbahaya, dan langkah selanjutnya — gratis, instan, tanpa pendaftaran.",
   howItWorksTitle: "Cara kerjanya",
   howItWorks: [
-    "Tempelkan teks kontrak kerja Anda (bahasa apa pun).",
+    "Unggah foto atau berkas kontrak Anda (atau tempel teksnya) — bahasa apa pun boleh.",
     "SafeSign membacanya dan memeriksanya terhadap daftar klausul eksploitasi yang sudah dikenal.",
     "Anda mendapat tingkat risiko, penjelasan bahasa sederhana, dan tempat mendapatkan bantuan nyata.",
   ],
   inputLabel: "Kontrak Anda",
   inputHint:
-    "Salin teks kontrak (dari foto, PDF, pesan WhatsApp, atau kertas) dan tempelkan di sini. Bahasa apa pun boleh.",
+    "Foto kontraknya, unggah berkasnya (PDF, Word, foto), atau tempel teks kontrak di bawah. Bahasa apa pun boleh.",
   inputPlaceholder: "Tempelkan teks kontrak kerja Anda di sini (bahasa apa pun)…",
   charCount: "{n} karakter",
+  uploadTitle: "Atau unggah kontrak Anda",
+  uploadCamera: "Kamera",
+  uploadPhoto: "Foto",
+  uploadFile: "Berkas",
+  uploadFormatsHint:
+    "Foto (JPG/PNG), PDF, Word (.docx), atau TXT — boleh beberapa berkas atau halaman sekaligus.",
+  uploadCloudHint:
+    "Tips: dari pemilih berkas Anda juga bisa memilih berkas dari Google Drive, iCloud, OneDrive, atau dokumen WhatsApp.",
+  uploadFromLink: "Impor dari tautan",
+  linkPlaceholder: "Tempel tautan kontrak (Google Drive, Dropbox, atau tautan langsung)…",
+  linkImport: "Impor",
+  readingProgress: "Membaca halaman {n} dari {m}…",
+  readingFile: "Membaca {name}…",
+  orPasteDivider: "atau tempel teksnya sendiri",
+  extractDone:
+    "Teks berhasil dibaca dari {n} halaman dan sudah dimasukkan ke kotak di bawah — mohon periksa sebentar, lalu ketuk “Periksa kontrak saya”.",
+  extractPartial:
+    "Hanya {n} halaman pertama yang dibaca, agar pemeriksaan tetap cepat dan terarah.",
+  ocrNoText:
+    "Tidak ada teks yang terbaca dari foto. Coba lagi dengan foto yang lebih jelas, cukup cahaya, dan diambil tegak lurus dari atas halaman.",
+  uploadFailed: "Berkas ini tidak dapat dibaca. Silakan coba lagi, atau tempel teksnya secara manual.",
+  uploadUnsupported:
+    "Jenis berkas ini tidak didukung. Gunakan foto (JPG/PNG), PDF, Word (.docx), atau TXT.",
+  uploadTooLarge: "Berkas terlalu besar (maksimal 15 MB).",
+  uploadTooMany:
+    "Terlalu banyak berkas dipilih (maksimal {n}). Silakan unggah halaman-halaman terpenting saja.",
+  linkInvalid:
+    "Tautan ini tidak dapat digunakan. Gunakan tautan langsung ke berkasnya, atau tautan berbagi Google Drive / Dropbox.",
+  linkFailed:
+    "Berkas tidak dapat diunduh dari tautan ini. Pastikan tautannya publik (“siapa saja yang memiliki tautan”), atau unduh dulu berkasnya lalu unggah di sini.",
+  uploadPrivacy:
+    "Foto dan berkas hanya dipakai untuk membaca teksnya, pada sesi ini saja. Tidak ada yang disimpan.",
   trySample: "Coba contoh kontrak",
   clearButton: "Hapus",
   analyzeButton: "Periksa kontrak saya",

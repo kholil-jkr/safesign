@@ -18,6 +18,28 @@ export interface Dictionary {
   inputHint: string;
   inputPlaceholder: string;
   charCount: string; // {n} placeholder
+  uploadTitle: string;
+  uploadCamera: string;
+  uploadPhoto: string;
+  uploadFile: string;
+  uploadFormatsHint: string;
+  uploadCloudHint: string;
+  uploadFromLink: string;
+  linkPlaceholder: string;
+  linkImport: string;
+  readingProgress: string; // {n} and {m} placeholders
+  readingFile: string; // {name} placeholder
+  orPasteDivider: string;
+  extractDone: string; // {n} placeholder
+  extractPartial: string; // {n} placeholder
+  ocrNoText: string;
+  uploadFailed: string;
+  uploadUnsupported: string;
+  uploadTooLarge: string;
+  uploadTooMany: string; // {n} placeholder
+  linkInvalid: string;
+  linkFailed: string;
+  uploadPrivacy: string;
   trySample: string;
   clearButton: string;
   analyzeButton: string;

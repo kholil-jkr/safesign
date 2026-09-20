@@ -129,3 +129,92 @@ export function extractJson<T>(raw: string): T | null {
   }
   return null;
 }
+
+/** OCR prompt for contract photos / scanned pages (upload feature). */
+const OCR_PROMPT = `You are a precise OCR engine. Transcribe ALL text visible in this image exactly as written, in the original language and script.
+Rules:
+- Keep the original language. Never translate, summarize, or explain.
+- Preserve the reading order (top to bottom) and the line/paragraph structure with line breaks.
+- Reproduce numbers, names, dates, amounts, currencies and punctuation exactly as shown.
+- Include headings, tables, signature blocks and stamps as best you can read them.
+- If a word is unreadable, write [?] in its place.
+- If the image contains no readable text at all, output exactly: [NO_TEXT]
+Output ONLY the transcription — no introductions, no comments, no markdown code fences.`;
+
+/**
+ * Transcribe text from an image (photo of a contract, rendered PDF page)
+ * using a multimodal Workers AI model. Returns the raw transcription.
+ * Throws Error("NO_TEXT") when the model reports no readable text.
+ */
+export async function cfVisionTranscribe(
+  imageBase64: string,
+  mime: string,
+  options: { maxTokens?: number } = {}
+): Promise<string> {
+  const { accountId, apiToken } = getCredentials();
+  // llama-4-scout is multimodal (verified: EN/ID/AR OCR). Overridable via env.
+  const model =
+    process.env.SAFESIGN_VISION_MODEL ||
+    process.env.SAFESIGN_PRIMARY_MODEL ||
+    "@cf/meta/llama-4-scout-17b-16e-instruct";
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90_000);
+  let text = "";
+  try {
+    const res = await fetch(`${CF_API_BASE}/accounts/${accountId}/ai/run/${model}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: OCR_PROMPT },
+              { type: "image_url", image_url: { url: `data:${mime};base64,${imageBase64}` } },
+            ],
+          },
+        ],
+        max_tokens: options.maxTokens ?? 3072,
+        temperature: 0,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`CF_HTTP_${res.status}`);
+    }
+    const data = (await res.json()) as {
+      success?: boolean;
+      result?: {
+        response?: string | Record<string, unknown>;
+        choices?: { message?: { content?: string } }[];
+      };
+      errors?: { message?: string }[];
+    };
+    if (data.success === false) {
+      throw new Error(`CF_API_ERROR: ${data.errors?.map((e) => e.message).join("; ")}`);
+    }
+    text = data.result?.choices?.[0]?.message?.content ?? "";
+    if (!text && typeof data.result?.response === "string") {
+      text = data.result.response;
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // Clean up common wrapper artifacts
+  text = (text ?? "").trim();
+  const fence = text.match(/^```[a-z]*\s*([\s\S]*?)```$/i);
+  if (fence) text = fence[1].trim();
+  if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+    text = text.slice(1, -1).trim();
+  }
+  if (!text || /^\[NO_TEXT\]$/i.test(text)) {
+    throw new Error("NO_TEXT");
+  }
+  return text;
+}

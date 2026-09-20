@@ -9,15 +9,47 @@ export const en: Dictionary = {
     "Paste your contract in any language. Get a plain-language summary, red-flag warnings and your next steps — free, instant, no sign-up.",
   howItWorksTitle: "How it works",
   howItWorks: [
-    "Paste the text of your employment contract (any language).",
+    "Upload a photo or a file of your contract (or paste the text) — any language is fine.",
     "SafeSign reads it and checks it against a list of known exploitative clauses.",
     "You get a risk rating, plain-language explanation, and where to get real help.",
   ],
   inputLabel: "Your contract",
   inputHint:
-    "Copy the contract text (from a photo, PDF, WhatsApp message or paper) and paste it here. Any language is fine.",
+    "Take a photo, upload a file (PDF, Word, photo), or paste the contract text below. Any language is fine.",
   inputPlaceholder: "Paste your employment contract text here (any language)…",
   charCount: "{n} characters",
+  uploadTitle: "Or upload your contract",
+  uploadCamera: "Camera",
+  uploadPhoto: "Photos",
+  uploadFile: "File",
+  uploadFormatsHint:
+    "Photo (JPG/PNG), PDF, Word (.docx) or TXT — you can upload several files or pages.",
+  uploadCloudHint:
+    "Tip: the file picker can also choose files from Google Drive, iCloud, OneDrive or your WhatsApp documents.",
+  uploadFromLink: "Import from a link instead",
+  linkPlaceholder: "Paste a link to the contract (Google Drive, Dropbox or direct link)…",
+  linkImport: "Import",
+  readingProgress: "Reading page {n} of {m}…",
+  readingFile: "Reading {name}…",
+  orPasteDivider: "or paste the text yourself",
+  extractDone:
+    "Text extracted from {n} page(s) — it is now in the box below. Please give it a quick check, then tap “Check my contract”.",
+  extractPartial:
+    "Only the first {n} pages were read, to keep the check quick and focused.",
+  ocrNoText:
+    "No readable text was found in the photo. Try again with a sharper, well-lit photo taken straight above the page.",
+  uploadFailed: "This file could not be read. Please try again, or paste the text manually.",
+  uploadUnsupported:
+    "This file type is not supported. Please use a photo (JPG/PNG), PDF, Word (.docx) or TXT file.",
+  uploadTooLarge: "The file is too large (maximum 15 MB).",
+  uploadTooMany:
+    "Too many files selected (maximum {n}). Please upload only the most important pages.",
+  linkInvalid:
+    "This link cannot be used. Please use a direct link to the file, or a Google Drive / Dropbox share link.",
+  linkFailed:
+    "The file could not be downloaded from this link. Make sure it is public (“anyone with the link”), or download the file first and upload it here.",
+  uploadPrivacy:
+    "Photos and files are used only to read the text, for this session only. Nothing is stored.",
   trySample: "Try a sample contract",
   clearButton: "Clear",
   analyzeButton: "Check my contract",
