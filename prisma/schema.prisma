@@ -97,3 +97,68 @@ model Template {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ─── Modul Advokasi ─────────────────────────────────────────────────────────
+// AI-assisted institutional outreach: smart institution matching, AI-drafted
+// advocacy emails (with user permission gate), case tracking & follow-ups.
+
+model Institution {
+  id                 String   @id @default(cuid())
+  name               String
+  shortName          String?
+  type               String // government | embassy | international | ngo
+  originCountry      String   @default("ANY") // negara asal yang dilayani; "ANY" = semua
+  destinationCountry String? // negara penempatan; null = semua negara
+  categories         String   @default("") // comma separated: SALARY,ABUSE,TRAFFICKING,CONTRACT,REPATRIATION,PLACEMENT,DOCUMENT,WELFARE
+  email              String?
+  phone              String?
+  website            String?
+  address            String?
+  description        String   @default("")
+  jurisdiction       String   @default("") // lingkup kewenangan
+  priority           Int      @default(50) // 1 = paling prioritas
+  responseTime       String?
+  language           String   @default("English")
+  cases              AdvocacyCase[]
+  createdAt          DateTime @default(now())
+}
+
+model AdvocacyCase {
+  id                 String       @id @default(cuid())
+  caseNumber         String       @unique
+  title              String
+  category           String // SALARY | ABUSE | TRAFFICKING | CONTRACT | REPATRIATION | PLACEMENT | DOCUMENT | WELFARE
+  priority           String       @default("medium") // low | medium | high | urgent
+  status             String       @default("draft") // draft | sent | followed_up | in_progress | resolved | closed
+  originCountry      String       @default("Indonesia")
+  destinationCountry String?
+  chronology         String?
+  anonymous          Boolean      @default(false)
+  contractId         String? // plain ref (no FK) — kontrak terkait di registry
+  institutionId      String
+  timelineJson       String       @default("[]") // [{at, event, note?, by?}]
+  attachmentsJson    String       @default("[]") // [{name, kind}]
+  createdByEmail     String       @default("")
+  createdByName      String       @default("")
+  sentAt             DateTime?
+  followUpDue        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  institution        Institution  @relation(fields: [institutionId], references: [id])
+  emails             CaseEmail[]
+}
+
+model CaseEmail {
+  id               String       @id @default(cuid())
+  caseId           String
+  type             String       @default("initial") // initial | followup
+  subject          String
+  body             String // bahasa lembaga (default English)
+  bodyUser         String? // terjemahan ke bahasa user
+  advice           String?
+  attachmentsJson  String       @default("[]")
+  status           String       @default("draft") // draft | sent
+  sentAt           DateTime?
+  createdAt        DateTime     @default(now())
+  case             AdvocacyCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}

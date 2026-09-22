@@ -5,7 +5,7 @@
 // optionally save the contract into the Manajemen registry (org-facing module).
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FolderPlus, Loader2, Lock, LayoutDashboard, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import { FolderPlus, Loader2, Lock, LayoutDashboard, Megaphone, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnalysisResultView } from "@/components/safesign/AnalysisResultView";
@@ -32,9 +32,11 @@ const MAX_CHARS = 20_000;
 export function AnalyzerApp({
   onSaveToRegistry,
   onOpenManage,
+  onOpenAdvocacy,
 }: {
   onSaveToRegistry: () => void;
   onOpenManage: () => void;
+  onOpenAdvocacy: () => void;
 }) {
   const [lang, setLang] = useState<LangCode>("en");
   const [langReady, setLangReady] = useState(false);
@@ -184,6 +186,15 @@ export function AnalyzerApp({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={onOpenAdvocacy}
+              className="h-10 rounded-xl border-teal-200 bg-white px-3 text-xs font-bold text-teal-800 hover:bg-teal-50 sm:px-4 sm:text-sm"
+              aria-label="Buka modul Advokasi"
+            >
+              <Megaphone className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Advokasi</span>
+            </Button>
             <Button
               variant="outline"
               onClick={onOpenManage}

@@ -2,12 +2,13 @@
 // and the view router (dashboard / contracts / new / templates / reports / team).
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Bell,
   FilePlus2,
   FileText,
   LayoutDashboard,
+  Megaphone,
   Menu,
   PenTool,
   ScanSearch,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -88,7 +90,7 @@ function NavList({ view, onNavigate }: { view: ManageView; onNavigate: (v: Manag
   );
 }
 
-export function ManageApp({ onOpenAnalyzer }: { onOpenAnalyzer: () => void }) {
+export function ManageApp({ onOpenAnalyzer, onOpenAdvocacy }: { onOpenAnalyzer: () => void; onOpenAdvocacy: () => void }) {
   const {
     view,
     setView,
@@ -117,9 +119,12 @@ export function ManageApp({ onOpenAnalyzer }: { onOpenAnalyzer: () => void }) {
     return () => clearInterval(t);
   }, [refreshNotifications, refreshKey]);
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const handleNav = useCallback(
     (v: ManageView) => {
       setView(v);
+      setDrawerOpen(false); // tutup drawer mobile setelah memilih menu
     },
     [setView]
   );
@@ -132,7 +137,7 @@ export function ManageApp({ onOpenAnalyzer }: { onOpenAnalyzer: () => void }) {
       <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900 text-white">
         <div className="flex h-16 items-center gap-3 px-4">
           {/* mobile menu */}
-          <Sheet>
+          <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
@@ -145,6 +150,9 @@ export function ManageApp({ onOpenAnalyzer }: { onOpenAnalyzer: () => void }) {
             </SheetTrigger>
             <SheetContent side="left" className="w-72 border-slate-800 bg-slate-900 p-0 text-white">
               <SheetTitle className="sr-only">Menu navigasi</SheetTitle>
+              <SheetDescription className="sr-only">
+                Pilih menu manajemen kontrak: dashboard, registry, tambah kontrak, template, laporan, atau tim.
+              </SheetDescription>
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-2.5 border-b border-slate-800 px-5 py-4">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-700">
@@ -173,7 +181,16 @@ export function ManageApp({ onOpenAnalyzer }: { onOpenAnalyzer: () => void }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Switch to Analyzer module */}
+            {/* Switch to other modules */}
+            <Button
+              variant="outline"
+              onClick={onOpenAdvocacy}
+              className="h-9 gap-2 rounded-xl border-slate-700 bg-slate-800 px-3 text-xs font-bold text-white hover:bg-slate-700 hover:text-white"
+              aria-label="Buka modul Advokasi"
+            >
+              <Megaphone className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Advokasi</span>
+            </Button>
             <Button
               variant="outline"
               onClick={onOpenAnalyzer}
