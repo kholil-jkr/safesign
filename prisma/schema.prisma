@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// SafeSign — Contract Management Platform schema
+// Module 1 "Analyzer" stays stateless; Module 2 "Manajemen" persists contracts.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,19 +11,89 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  role      String     @default("staff") // admin | legal | manager | staff
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  contracts Contract[] @relation("CreatedContracts")
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Contract {
+  id            String   @id @default(cuid())
+  title         String
+  contractNo    String?
+  partyA        String? // pihak pertama (perusahaan/kami)
+  partyB        String? // pihak kedua (counterparty)
+  startDate     DateTime?
+  endDate       DateTime?
+  value         Float?
+  currency      String   @default("IDR")
+  category      String   @default("other") // employment | vendor | lease | nda | service | other
+  tags          String   @default("") // comma separated
+  status        String   @default("draft") // draft | pending_approval | approved | rejected | terminated
+  riskLevel     String? // low | medium | high
+  analysisJson  String? // AnalysisResult JSON (Analyzer structure)
+  contentText   String? // full contract text
+  sourceType    String? // camera | photo | file | cloud | template | manual
+  fileName      String?
+  autoRenew     Boolean  @default(false)
+  notes         String?
+  remindersJson String   @default("[90,60,30,7]") // enabled day thresholds
+  ackedJson     String   @default("[]") // acknowledged reminder keys "contractId:days"
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     User?    @relation("CreatedContracts", fields: [createdById], references: [id])
+  versions      ContractVersion[]
+  approvals     Approval[]
+  signatures    Signature[]
+}
+
+model ContractVersion {
+  id          String   @id @default(cuid())
+  contractId  String
+  version     Int
+  title       String
+  contentText String?
+  snapshotJson String? // key fields snapshot at save time
+  changeNote  String?
+  editedBy    String?
+  createdAt   DateTime @default(now())
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Approval {
+  id           String    @id @default(cuid())
+  contractId   String
+  step         Int       @default(1)
+  approverRole String // manager | legal
+  approverName String?
+  status       String    @default("pending") // pending | approved | rejected
+  note         String?
+  createdAt    DateTime  @default(now())
+  decidedAt    DateTime?
+  contract     Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Signature {
+  id            String   @id @default(cuid())
+  contractId    String
+  signerName    String
+  signerRole    String   @default("party_b") // party_a | party_b | witness
+  signatureData String // data:image/png;base64,...
+  typedName     String?
+  signedAt      DateTime @default(now())
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   @default("other")
+  description String?
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

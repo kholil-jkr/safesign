@@ -120,3 +120,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== Print styles (Reports view: Cetak / Simpan PDF) ===== */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 14mm;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  /* hide interactive chrome */
+  header,
+  aside,
+  footer,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+  /* make tables fill the page cleanly */
+  table {
+    width: 100% !important;
+    font-size: 10.5px !important;
+  }
+  th,
+  td {
+    padding: 4px 6px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+  section {
+    box-shadow: none !important;
+    border: none !important;
+    break-inside: auto;
+  }
+}
