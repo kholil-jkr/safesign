@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
-    const q = (sp.get("q") ?? "").trim().toLowerCase();
+    const q = (sp.get("q") ?? "").trim(); // keep original case; DB search is case-insensitive
     const type = sp.get("type") ?? "";
     const origin = sp.get("origin") ?? "";
     const destination = sp.get("destination") ?? "";
@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
     if (q) {
       AND.push({
         OR: [
-          { name: { contains: q } },
-          { shortName: { contains: q } },
-          { description: { contains: q } },
-          { jurisdiction: { contains: q } },
+          { name: { contains: q, mode: "insensitive" } },
+          { shortName: { contains: q, mode: "insensitive" } },
+          { description: { contains: q, mode: "insensitive" } },
+          { jurisdiction: { contains: q, mode: "insensitive" } },
         ],
       });
     }
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     if (destination) {
       AND.push({ OR: [{ destinationCountry: destination }, { destinationCountry: null }] });
     }
-    if (category) AND.push({ categories: { contains: category } });
+    if (category) AND.push({ categories: { contains: category, mode: "insensitive" } });
     if (AND.length > 0) where.AND = AND;
 
     const institutions = await db.institution.findMany({

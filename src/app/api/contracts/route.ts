@@ -12,7 +12,7 @@ const VALID_STATUSES = ["draft", "pending_approval", "approved", "rejected", "te
 export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
-    const q = (sp.get("q") ?? "").trim().toLowerCase();
+    const q = (sp.get("q") ?? "").trim(); // keep original case; DB search is case-insensitive
     const category = sp.get("category") ?? "";
     const status = sp.get("status") ?? "";
     const risk = sp.get("risk") ?? "";
@@ -25,12 +25,12 @@ export async function GET(req: NextRequest) {
     if (q) {
       AND.push({
         OR: [
-          { title: { contains: q } },
-          { contractNo: { contains: q } },
-          { partyA: { contains: q } },
-          { partyB: { contains: q } },
-          { tags: { contains: q } },
-          { notes: { contains: q } },
+          { title: { contains: q, mode: "insensitive" } },
+          { contractNo: { contains: q, mode: "insensitive" } },
+          { partyA: { contains: q, mode: "insensitive" } },
+          { partyB: { contains: q, mode: "insensitive" } },
+          { tags: { contains: q, mode: "insensitive" } },
+          { notes: { contains: q, mode: "insensitive" } },
         ],
       });
     }
