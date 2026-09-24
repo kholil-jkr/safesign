@@ -30,8 +30,18 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (never commit real secrets)
 .env*
+!.env.example
+
+# security hardening — never commit secrets, uploads, internal logs, or local DBs
+upload/*TOKEN*
+upload/*SECRET*
+upload/*KEY*
+upload/
+worklog.md
+db/*.db
+db/*.db-journal
 
 # vercel
 .vercel
