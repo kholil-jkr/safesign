@@ -2,12 +2,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeTemplate } from "@/lib/manage/serialize";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
 const VALID_CATEGORIES = ["employment", "vendor", "lease", "nda", "service", "other"];
 
 export async function GET() {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const templates = await db.template.findMany({ orderBy: { name: "asc" } });
     return NextResponse.json({ ok: true, templates: templates.map(serializeTemplate) });
@@ -18,6 +25,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const body = (await req.json()) as {
       name?: string;
@@ -47,6 +59,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const id = req.nextUrl.searchParams.get("id");
     if (!id) return NextResponse.json({ ok: false, error: "ID_REQUIRED" }, { status: 400 });

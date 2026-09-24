@@ -54,7 +54,7 @@ import {
   type EmailDraft,
 } from "@/lib/advocacy/types";
 import { formatDateTime } from "@/lib/manage/types";
-import { useManage } from "@/lib/manage/store";
+import { useAuth } from "@/lib/auth-store";
 import { TypeChip } from "./NewCaseView";
 
 const LANG_LABEL: Record<string, string> = {
@@ -65,7 +65,7 @@ const LANG_LABEL: Record<string, string> = {
 
 export function CaseDetailView({ onOpenContract }: { onOpenContract: (id: string) => void }) {
   const { selectedCaseId, closeCase, bumpRefresh } = useAdvocacy();
-  const currentUser = useManage((s) => s.currentUser);
+  const currentUser = useAuth((s) => s.user);
   const [kase, setKase] = useState<AdvocacyCaseDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +155,7 @@ export function CaseDetailView({ onOpenContract }: { onOpenContract: (id: string
       if (editDirty) {
         await updateCase(kase.id, { subject, body: emailBody });
       }
-      const res = await sendCaseEmail(kase.id, currentUser.email);
+      const res = await sendCaseEmail(kase.id, currentUser?.email ?? "");
       setSendResult({ mode: res.mode, mailto: res.mailto, noEmail: res.noEmail, website: res.website });
       setPermissionOpen(false);
       setPermissionChecked(false);
@@ -189,7 +189,7 @@ export function CaseDetailView({ onOpenContract }: { onOpenContract: (id: string
     if (!followUpDraft || !followUpChecked) return;
     setFollowUpSending(true);
     try {
-      const res = await sendFollowUpEmail(kase.id, followUpDraft, currentUser.email);
+      const res = await sendFollowUpEmail(kase.id, followUpDraft, currentUser?.email ?? "");
       setFollowUpOpen(false);
       setSendResult({ mode: res.mode, mailto: res.mailto, noEmail: res.noEmail, website: res.website });
       await load();
@@ -204,7 +204,7 @@ export function CaseDetailView({ onOpenContract }: { onOpenContract: (id: string
   const changeStatus = async (status: string) => {
     setStatusBusy(true);
     try {
-      await updateCase(kase.id, { status, note: statusNote.trim() || undefined, by: currentUser.email });
+      await updateCase(kase.id, { status, note: statusNote.trim() || undefined, by: currentUser?.email });
       setStatusNote("");
       await load();
       bumpRefresh();

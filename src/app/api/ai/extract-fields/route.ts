@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cfChatCompletion, extractJson } from "@/lib/safesign/cloudflare-ai";
 import type { ExtractedFields } from "@/lib/manage/types";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -34,6 +36,11 @@ Rules:
 - Respond in the JSON structure above only.`;
 
 export async function POST(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const body = (await req.json()) as { text?: string };
     const text = (body.text ?? "").trim();

@@ -2,11 +2,15 @@
 // Body wajib { confirm: true } — tanpa itu tidak ada yang terkirim.
 // Mode SMTP bila env lengkap; selain itu "manual mode" (mailto + salin) —
 // kasus tetap tercatat terkirim dan terlacak.
+// Balasan lembaga dikirim ke email user (Reply-To), dan dicocokkan otomatis
+// via webhook /api/email/inbound menggunakan Message-ID.
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { serializeCase } from "@/lib/advocacy/serialize";
 import type { TimelineEntry } from "@/lib/advocacy/types";
+import { getSessionUser } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,6 +20,14 @@ function smtpConfigured(): boolean {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
+
+  const rl = rateLimit(`send-email:${user.id}`, 10, 3_600_000);
+  if (!rl.ok) {
+    return NextResponse.json({ ok: false, error: "RATE_LIMITED", retryAfter: rl.retryAfter }, { status: 429 });
+  }
+
   try {
     const { id } = await params;
     const body = (await req.json()) as Record<string, unknown>;
@@ -29,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       where: { id },
       include: { institution: true, emails: true },
     });
-    if (!c) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    if (!c || c.userId !== user.id) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
     if (c.status !== "draft") {
       return NextResponse.json({ ok: false, error: "ALREADY_SENT" }, { status: 400 });
     }
@@ -47,6 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Percobaan kirim SMTP nyata (opsional, tergantung env)
     let mode: "smtp" | "manual" = "manual";
+    let messageId: string | undefined;
     if (!noEmail && smtpConfigured()) {
       try {
         const transporter = nodemailer.createTransport({
@@ -55,13 +68,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           secure: process.env.SMTP_SECURE === "true",
           auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
         });
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
           from: process.env.SMTP_FROM!,
           to: inst.email!,
-          replyTo: typeof body.replyTo === "string" ? body.replyTo.slice(0, 200) : process.env.SMTP_FROM!,
+          // Balasan lembaga langsung masuk ke kotak masuk email user (email login)
+          replyTo: user.email,
           subject: draftEmail.subject,
           text: draftEmail.body,
+          headers: {
+            "X-Entity-Ref": c.caseNumber, // penanda kasus untuk penyedia email
+          },
         });
+        messageId = typeof info.messageId === "string" ? info.messageId : undefined;
         mode = "smtp";
       } catch (mailErr) {
         console.error("[advocacy/send SMTP]", mailErr);
@@ -69,7 +87,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
 
-    await db.caseEmail.update({ where: { id: draftEmail.id }, data: { status: "sent", sentAt: now } });
+    await db.caseEmail.update({
+      where: { id: draftEmail.id },
+      data: { status: "sent", sentAt: now, messageId: messageId ?? null },
+    });
     await db.advocacyCase.update({
       where: { id },
       data: { status: "sent", sentAt: now, followUpDue: new Date(now.getTime() + 14 * 86_400_000) },

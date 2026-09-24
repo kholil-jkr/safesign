@@ -1,18 +1,25 @@
 // SafeSign Advokasi — daftar kasus & pembuatan kasus (menyimpan draf email AI)
+// Kasus bersifat PRIBADI: hanya visible & bisa dibuat oleh user yang login.
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeCase } from "@/lib/advocacy/serialize";
 import { CATEGORY_META, type AttachmentItem } from "@/lib/advocacy/types";
+import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 const VALID_STATUSES = ["draft", "sent", "followed_up", "in_progress", "resolved", "closed"];
 
 export async function GET(req: NextRequest) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
   try {
     const sp = req.nextUrl.searchParams;
     const status = sp.get("status") ?? "";
-    const where = VALID_STATUSES.includes(status) ? { status } : {};
+    const where = {
+      userId: user.id,
+      ...(VALID_STATUSES.includes(status) ? { status } : {}),
+    };
 
     const cases = await db.advocacyCase.findMany({
       where,
@@ -27,6 +34,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
   try {
     const body = (await req.json()) as Record<string, unknown>;
     const title = String(body.title ?? "").trim();
@@ -65,6 +74,7 @@ export async function POST(req: NextRequest) {
     const c = await db.advocacyCase.create({
       data: {
         caseNumber,
+        userId: user.id,
         title: title.slice(0, 250),
         category,
         priority: ["low", "medium", "high", "urgent"].includes(String(body.priority)) ? String(body.priority) : "medium",
@@ -83,8 +93,8 @@ export async function POST(req: NextRequest) {
           { at: now, event: "DRAFT_CREATED", note: `AI menyusun draf email ke ${institution.shortName ?? institution.name}` },
         ]),
         attachmentsJson: JSON.stringify(attachments),
-        createdByEmail: typeof body.createdByEmail === "string" ? body.createdByEmail.slice(0, 200) : "",
-        createdByName: typeof body.createdByName === "string" ? body.createdByName.slice(0, 200) : "",
+        createdByEmail: user.email,
+        createdByName: user.name,
       },
     });
 

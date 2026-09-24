@@ -3,10 +3,17 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeContract } from "@/lib/manage/serialize";
 import { daysLeft, CATEGORY_LABELS, STATUS_LABELS } from "@/lib/manage/types";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const contracts = await db.contract.findMany({
       include: {

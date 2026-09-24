@@ -1,8 +1,10 @@
 // SafeSign Advokasi — detail kasus (email + timeline), sunting draf, ubah status, catatan
+// Akses: HANYA pemilik kasus (user login) — isolasi antarpengguna.
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeCase } from "@/lib/advocacy/serialize";
 import type { TimelineEntry } from "@/lib/advocacy/types";
+import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +30,15 @@ async function pushTimeline(caseId: string, entry: TimelineEntry) {
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
   try {
     const { id } = await params;
     const c = await db.advocacyCase.findUnique({
       where: { id },
       include: { institution: true, emails: true },
     });
-    if (!c) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    if (!c || c.userId !== user.id) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
     return NextResponse.json({ ok: true, case: serializeCase(c) });
   } catch (err) {
     console.error("[advocacy/cases/[id] GET]", err);
@@ -43,11 +47,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
   try {
     const { id } = await params;
     const body = (await req.json()) as Record<string, unknown>;
     const c = await db.advocacyCase.findUnique({ where: { id }, include: { emails: true } });
-    if (!c) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    if (!c || c.userId !== user.id) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
 
     // 1) Sunting draf email (hanya email berstatus draft)
     if (typeof body.subject === "string" || typeof body.body === "string") {

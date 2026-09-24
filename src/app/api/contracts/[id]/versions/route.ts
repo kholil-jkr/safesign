@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeVersion } from "@/lib/manage/serialize";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,11 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const { id } = await params;
     const versions = await db.contractVersion.findMany({
@@ -26,6 +33,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const { id } = await params;
     const body = (await req.json()) as { versionId?: string; actorName?: string };

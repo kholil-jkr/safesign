@@ -50,6 +50,9 @@ const ANALYSIS_LOW = {
   disclaimer: "Analisis ini bersifat informatif dan bukan nasihat hukum profesional.",
 };
 
+  const DEMO = process.env.SEED_DEMO === "1";
+  console.log(DEMO ? "Seeding basis + DATA DEMO…" : "Seeding basis (template saja)…");
+
 async function main() {
   console.log("Seeding…");
 
@@ -59,218 +62,222 @@ async function main() {
   await db.contractVersion.deleteMany();
   await db.contract.deleteMany();
   await db.template.deleteMany();
-  await db.user.deleteMany();
+  if (DEMO) await db.user.deleteMany(); // user asli tidak disentuh saat seed basis
 
-  const users = {
-    admin: await db.user.create({ data: { email: "budi@safesign.id", name: "Budi Santoso", role: "admin" } }),
-    legal: await db.user.create({ data: { email: "sari@safesign.id", name: "Sari Wulandari", role: "legal" } }),
-    manager: await db.user.create({ data: { email: "agus@safesign.id", name: "Agus Pratama", role: "manager" } }),
-    staff: await db.user.create({ data: { email: "rina@safesign.id", name: "Rina Melati", role: "staff" } }),
-  };
+  if (DEMO) {
 
-  type C = {
-    title: string; contractNo: string; partyA: string; partyB: string;
-    start: number; end: number; value: number; category: string; tags: string;
-    status: string; risk?: string; analysis?: object; source?: string; autoRenew?: boolean;
-    notes?: string; createdBy: string;
-    approvals?: { step: number; role: string; name?: string; status: string; note?: string }[];
-  };
+      const users = {
+        admin: await db.user.create({ data: { email: "budi@safesign.id", name: "Budi Santoso", role: "admin" } }),
+        legal: await db.user.create({ data: { email: "sari@safesign.id", name: "Sari Wulandari", role: "legal" } }),
+        manager: await db.user.create({ data: { email: "agus@safesign.id", name: "Agus Pratama", role: "manager" } }),
+        staff: await db.user.create({ data: { email: "rina@safesign.id", name: "Rina Melati", role: "staff" } }),
+      };
 
-  const contracts: C[] = [
-    {
-      title: "PKWT Penempatan Pekerja Migran — Arab Saudi (Domestic Worker)",
-      contractNo: "PKWT/2025/SA-041", partyA: "PT Mitra Jaya Abadi", partyB: "Siti Aminah",
-      start: -340, end: 20, value: 42000000, category: "employment", tags: "pekerja migran,tkw,saudi",
-      status: "approved", risk: "high", analysis: ANALYSIS_HIGH, source: "photo",
-      autoRenew: false, notes: "Kontrak penempatan rumah tangga. Perlu perhatian khusus pada klausul penahanan paspor.",
-      createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved", note: "Sesuai budget penempatan." },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved", note: "Revisi pasal 7 sudah masuk." },
-      ],
-    },
-    {
-      title: "Perjanjian Kerja — Domestic Helper Hong Kong",
-      contractNo: "HK/2025/DH-112", partyA: "PT Mitra Jaya Abadi", partyB: "Maria Lourdes",
-      start: -290, end: 75, value: 38500000, category: "employment", tags: "pekerja migran,hongkong",
-      status: "approved", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "file",
-      autoRenew: true, createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved", note: "Auto-renewal diperhatikan." },
-      ],
-    },
-    {
-      title: "Kontrak Sewa Ruko — Jl. Sudirman No. 45",
-      contractNo: "Sewa/2024/RK-08", partyA: "PT Mitra Jaya Abadi", partyB: "H. Rahman Wijaya",
-      start: -720, end: 8, value: 96000000, category: "lease", tags: "sewa,ruko,kantor",
-      status: "approved", risk: "low", analysis: ANALYSIS_LOW, source: "file",
-      createdBy: users.admin.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "Perjanjian Kerja Sama Vendor — Cleaning Service Kantor Pusat",
-      contractNo: "Vendor/2025/CS-19", partyA: "PT Mitra Jaya Abadi", partyB: "CV Bersih Prima",
-      start: -215, end: 150, value: 132000000, category: "vendor", tags: "vendor,fasilitas",
-      status: "approved", risk: "low", source: "cloud",
-      createdBy: users.manager.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "NDA — Kolaborasi Produk Digital dengan PT Sumber Makmur",
-      contractNo: "NDA/2025/SM-03", partyA: "PT Mitra Jaya Abadi", partyB: "PT Sumber Makmur Sejahtera",
-      start: -100, end: 635, value: 0, category: "nda", tags: "kerahasiaan,kolaborasi",
-      status: "approved", risk: "low", source: "file",
-      createdBy: users.legal.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "Perjanjian Penempatan Pekerja Migran — Jepang (Tokutei Ginou)",
-      contractNo: "JP/2025/TG-77", partyA: "PT Mitra Jaya Abadi", partyB: "Ahmad Fauzi",
-      start: -165, end: 200, value: 78000000, category: "employment", tags: "pekerja migran,jepang,ssw",
-      status: "approved", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "camera",
-      autoRenew: true, createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "Kontrak Pengadaan ATK & Consumable Tahunan",
-      contractNo: "Vendor/2025/ATK-02", partyA: "PT Mitra Jaya Abadi", partyB: "PT Kantor Lengkap Indonesia",
-      start: -310, end: 55, value: 45000000, category: "vendor", tags: "vendor,atk,pengadaan",
-      status: "approved", risk: "low", source: "cloud",
-      createdBy: users.manager.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "Perjanjian Kerja — Pabrik Elektronik Malaysia (Johor)",
-      contractNo: "MY/2024/EL-156", partyA: "PT Mitra Jaya Abadi", partyB: "Dewi Lestari",
-      start: -560, end: -15, value: 36000000, category: "employment", tags: "pekerja migran,malaysia,pabrik",
-      status: "approved", risk: "high", analysis: ANALYSIS_HIGH, source: "photo",
-      createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
-        { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
-      ],
-    },
-    {
-      title: "Kontrak Jasa Maintenance IT & Dukungan Sistem",
-      contractNo: "Jasa/2025/IT-11", partyA: "PT Mitra Jaya Abadi", partyB: "PT Teknologi Andalan",
-      start: -120, end: 245, value: 84000000, category: "service", tags: "jasa,it,maintenance",
-      status: "pending_approval", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "file",
-      createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", name: "Agus Pratama", status: "approved", note: "Lanjut review legal." },
-        { step: 2, role: "legal", status: "pending" },
-      ],
-    },
-    {
-      title: "Kontrak Kerja Sama Pelatihan Bahasa Jepang",
-      contractNo: "Jasa/2025/BJ-05", partyA: "PT Mitra Jaya Abadi", partyB: "Yayasan Bunga Sakura",
-      start: -60, end: 305, value: 28000000, category: "service", tags: "jasa,pelatihan,bahasa",
-      status: "rejected", risk: "high", analysis: ANALYSIS_HIGH, source: "manual",
-      notes: "Ditolak: struktur pembayaran tidak jelas & klausul denda berat.",
-      createdBy: users.staff.id,
-      approvals: [
-        { step: 1, role: "manager", status: "rejected", name: "Agus Pratama", note: "Skema pembayaran 100% di muka tidak wajar." },
-      ],
-    },
-    {
-      title: "PKWT Penempatan — Perawat Lansia Taiwan",
-      contractNo: "PKWT/2026/TW-001", partyA: "PT Mitra Jaya Abadi", partyB: "Nur Halimah",
-      start: 30, end: 755, value: 66000000, category: "employment", tags: "pekerja migran,taiwan,perawat",
-      status: "draft", source: "file",
-      createdBy: users.staff.id,
-    },
-    {
-      title: "Perjanjian Sewa Server & Cloud Hosting",
-      contractNo: "Jasa/2026/CL-004", partyA: "PT Mitra Jaya Abadi", partyB: "Cloud Nusantara Data",
-      start: 14, end: 379, value: 54000000, category: "service", tags: "jasa,cloud,infrastruktur",
-      status: "draft", source: "manual",
-      createdBy: users.admin.id,
-    },
-  ];
+      type C = {
+        title: string; contractNo: string; partyA: string; partyB: string;
+        start: number; end: number; value: number; category: string; tags: string;
+        status: string; risk?: string; analysis?: object; source?: string; autoRenew?: boolean;
+        notes?: string; createdBy: string;
+        approvals?: { step: number; role: string; name?: string; status: string; note?: string }[];
+      };
 
-  for (const c of contracts) {
-    const contract = await db.contract.create({
-      data: {
-        title: c.title,
-        contractNo: c.contractNo,
-        partyA: c.partyA,
-        partyB: c.partyB,
-        startDate: daysFromNow(c.start),
-        endDate: daysFromNow(c.end),
-        value: c.value,
-        currency: "IDR",
-        category: c.category,
-        tags: c.tags,
-        status: c.status,
-        riskLevel: c.risk ?? null,
-        analysisJson: c.analysis ? JSON.stringify(c.analysis) : null,
-        contentText: null,
-        sourceType: c.source ?? null,
-        autoRenew: c.autoRenew ?? false,
-        notes: c.notes ?? null,
-        createdById: c.createdBy,
-        remindersJson: JSON.stringify([90, 60, 30, 7]),
-        ackedJson: JSON.stringify([]),
-      },
-    });
-    // version 1
-    await db.contractVersion.create({
-      data: {
-        contractId: contract.id,
-        version: 1,
-        title: c.title,
-        contentText: null,
-        snapshotJson: JSON.stringify({ status: c.status, value: c.value }),
-        changeNote: "Kontrak dibuat (impor awal)",
-        editedBy: "Sistem",
-      },
-    });
-    if (c.approvals?.length) {
-      for (const a of c.approvals) {
-        await db.approval.create({
+      const contracts: C[] = [
+        {
+          title: "PKWT Penempatan Pekerja Migran — Arab Saudi (Domestic Worker)",
+          contractNo: "PKWT/2025/SA-041", partyA: "PT Mitra Jaya Abadi", partyB: "Siti Aminah",
+          start: -340, end: 20, value: 42000000, category: "employment", tags: "pekerja migran,tkw,saudi",
+          status: "approved", risk: "high", analysis: ANALYSIS_HIGH, source: "photo",
+          autoRenew: false, notes: "Kontrak penempatan rumah tangga. Perlu perhatian khusus pada klausul penahanan paspor.",
+          createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved", note: "Sesuai budget penempatan." },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved", note: "Revisi pasal 7 sudah masuk." },
+          ],
+        },
+        {
+          title: "Perjanjian Kerja — Domestic Helper Hong Kong",
+          contractNo: "HK/2025/DH-112", partyA: "PT Mitra Jaya Abadi", partyB: "Maria Lourdes",
+          start: -290, end: 75, value: 38500000, category: "employment", tags: "pekerja migran,hongkong",
+          status: "approved", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "file",
+          autoRenew: true, createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved", note: "Auto-renewal diperhatikan." },
+          ],
+        },
+        {
+          title: "Kontrak Sewa Ruko — Jl. Sudirman No. 45",
+          contractNo: "Sewa/2024/RK-08", partyA: "PT Mitra Jaya Abadi", partyB: "H. Rahman Wijaya",
+          start: -720, end: 8, value: 96000000, category: "lease", tags: "sewa,ruko,kantor",
+          status: "approved", risk: "low", analysis: ANALYSIS_LOW, source: "file",
+          createdBy: users.admin.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "Perjanjian Kerja Sama Vendor — Cleaning Service Kantor Pusat",
+          contractNo: "Vendor/2025/CS-19", partyA: "PT Mitra Jaya Abadi", partyB: "CV Bersih Prima",
+          start: -215, end: 150, value: 132000000, category: "vendor", tags: "vendor,fasilitas",
+          status: "approved", risk: "low", source: "cloud",
+          createdBy: users.manager.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "NDA — Kolaborasi Produk Digital dengan PT Sumber Makmur",
+          contractNo: "NDA/2025/SM-03", partyA: "PT Mitra Jaya Abadi", partyB: "PT Sumber Makmur Sejahtera",
+          start: -100, end: 635, value: 0, category: "nda", tags: "kerahasiaan,kolaborasi",
+          status: "approved", risk: "low", source: "file",
+          createdBy: users.legal.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "Perjanjian Penempatan Pekerja Migran — Jepang (Tokutei Ginou)",
+          contractNo: "JP/2025/TG-77", partyA: "PT Mitra Jaya Abadi", partyB: "Ahmad Fauzi",
+          start: -165, end: 200, value: 78000000, category: "employment", tags: "pekerja migran,jepang,ssw",
+          status: "approved", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "camera",
+          autoRenew: true, createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "Kontrak Pengadaan ATK & Consumable Tahunan",
+          contractNo: "Vendor/2025/ATK-02", partyA: "PT Mitra Jaya Abadi", partyB: "PT Kantor Lengkap Indonesia",
+          start: -310, end: 55, value: 45000000, category: "vendor", tags: "vendor,atk,pengadaan",
+          status: "approved", risk: "low", source: "cloud",
+          createdBy: users.manager.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "Perjanjian Kerja — Pabrik Elektronik Malaysia (Johor)",
+          contractNo: "MY/2024/EL-156", partyA: "PT Mitra Jaya Abadi", partyB: "Dewi Lestari",
+          start: -560, end: -15, value: 36000000, category: "employment", tags: "pekerja migran,malaysia,pabrik",
+          status: "approved", risk: "high", analysis: ANALYSIS_HIGH, source: "photo",
+          createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved" },
+            { step: 2, role: "legal", name: "Sari Wulandari", status: "approved" },
+          ],
+        },
+        {
+          title: "Kontrak Jasa Maintenance IT & Dukungan Sistem",
+          contractNo: "Jasa/2025/IT-11", partyA: "PT Mitra Jaya Abadi", partyB: "PT Teknologi Andalan",
+          start: -120, end: 245, value: 84000000, category: "service", tags: "jasa,it,maintenance",
+          status: "pending_approval", risk: "medium", analysis: ANALYSIS_MEDIUM, source: "file",
+          createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", name: "Agus Pratama", status: "approved", note: "Lanjut review legal." },
+            { step: 2, role: "legal", status: "pending" },
+          ],
+        },
+        {
+          title: "Kontrak Kerja Sama Pelatihan Bahasa Jepang",
+          contractNo: "Jasa/2025/BJ-05", partyA: "PT Mitra Jaya Abadi", partyB: "Yayasan Bunga Sakura",
+          start: -60, end: 305, value: 28000000, category: "service", tags: "jasa,pelatihan,bahasa",
+          status: "rejected", risk: "high", analysis: ANALYSIS_HIGH, source: "manual",
+          notes: "Ditolak: struktur pembayaran tidak jelas & klausul denda berat.",
+          createdBy: users.staff.id,
+          approvals: [
+            { step: 1, role: "manager", status: "rejected", name: "Agus Pratama", note: "Skema pembayaran 100% di muka tidak wajar." },
+          ],
+        },
+        {
+          title: "PKWT Penempatan — Perawat Lansia Taiwan",
+          contractNo: "PKWT/2026/TW-001", partyA: "PT Mitra Jaya Abadi", partyB: "Nur Halimah",
+          start: 30, end: 755, value: 66000000, category: "employment", tags: "pekerja migran,taiwan,perawat",
+          status: "draft", source: "file",
+          createdBy: users.staff.id,
+        },
+        {
+          title: "Perjanjian Sewa Server & Cloud Hosting",
+          contractNo: "Jasa/2026/CL-004", partyA: "PT Mitra Jaya Abadi", partyB: "Cloud Nusantara Data",
+          start: 14, end: 379, value: 54000000, category: "service", tags: "jasa,cloud,infrastruktur",
+          status: "draft", source: "manual",
+          createdBy: users.admin.id,
+        },
+      ];
+
+      for (const c of contracts) {
+        const contract = await db.contract.create({
           data: {
-            contractId: contract.id,
-            step: a.step,
-            approverRole: a.role,
-            approverName: a.name ?? null,
-            status: a.status,
-            note: a.note ?? null,
-            decidedAt: a.status === "pending" ? null : daysFromNow(-Math.abs(10 - a.step * 3)),
+            title: c.title,
+            contractNo: c.contractNo,
+            partyA: c.partyA,
+            partyB: c.partyB,
+            startDate: daysFromNow(c.start),
+            endDate: daysFromNow(c.end),
+            value: c.value,
+            currency: "IDR",
+            category: c.category,
+            tags: c.tags,
+            status: c.status,
+            riskLevel: c.risk ?? null,
+            analysisJson: c.analysis ? JSON.stringify(c.analysis) : null,
+            contentText: null,
+            sourceType: c.source ?? null,
+            autoRenew: c.autoRenew ?? false,
+            notes: c.notes ?? null,
+            createdById: c.createdBy,
+            remindersJson: JSON.stringify([90, 60, 30, 7]),
+            ackedJson: JSON.stringify([]),
           },
         });
+        // version 1
+        await db.contractVersion.create({
+          data: {
+            contractId: contract.id,
+            version: 1,
+            title: c.title,
+            contentText: null,
+            snapshotJson: JSON.stringify({ status: c.status, value: c.value }),
+            changeNote: "Kontrak dibuat (impor awal)",
+            editedBy: "Sistem",
+          },
+        });
+        if (c.approvals?.length) {
+          for (const a of c.approvals) {
+            await db.approval.create({
+              data: {
+                contractId: contract.id,
+                step: a.step,
+                approverRole: a.role,
+                approverName: a.name ?? null,
+                status: a.status,
+                note: a.note ?? null,
+                decidedAt: a.status === "pending" ? null : daysFromNow(-Math.abs(10 - a.step * 3)),
+              },
+            });
+          }
+        }
+        // sample signature on a couple of approved contracts
+        if (c.status === "approved" && c.category === "lease") {
+          await db.signature.create({
+            data: {
+              contractId: contract.id,
+              signerName: "H. Rahman Wijaya",
+              signerRole: "party_b",
+              signatureData:
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+              typedName: "Rahman Wijaya",
+              signedAt: daysFromNow(-718),
+            },
+          });
+        }
       }
-    }
-    // sample signature on a couple of approved contracts
-    if (c.status === "approved" && c.category === "lease") {
-      await db.signature.create({
-        data: {
-          contractId: contract.id,
-          signerName: "H. Rahman Wijaya",
-          signerRole: "party_b",
-          signatureData:
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-          typedName: "Rahman Wijaya",
-          signedAt: daysFromNow(-718),
-        },
-      });
-    }
   }
+
 
   const templates = [
     {

@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { daysLeftLabel } from "@/lib/manage/types";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,11 @@ function csvEscape(v: string | number | null | undefined): string {
 }
 
 export async function GET(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const contracts = await db.contract.findMany({
       orderBy: { updatedAt: "desc" },

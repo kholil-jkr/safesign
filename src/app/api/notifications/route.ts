@@ -4,10 +4,17 @@ import { db } from "@/lib/db";
 import { safeParse } from "@/lib/manage/serialize";
 import { daysLeft } from "@/lib/manage/types";
 import type { NotificationItem } from "@/lib/manage/types";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const contracts = await db.contract.findMany({
       where: { status: { in: ["approved", "pending_approval", "draft"] } },

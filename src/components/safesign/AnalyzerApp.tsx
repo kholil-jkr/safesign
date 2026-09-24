@@ -2,10 +2,10 @@
 
 // SafeSign — Analyzer module (worker-facing, 10 languages).
 // Linear flow: upload/paste contract → wait → see results → (optional) chat →
-// optionally save the contract into the Manajemen registry (org-facing module).
+// hasil otomatis tersimpan ke Riwayat Kontrak bila login (bukan penyamaran).
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FolderPlus, Loader2, Lock, LayoutDashboard, Megaphone, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, EyeOff, FolderPlus, History, Loader2, Lock, LogIn, Megaphone, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnalysisResultView } from "@/components/safesign/AnalysisResultView";
@@ -23,6 +23,8 @@ import {
 import { SAMPLE_CONTRACTS } from "@/lib/safesign/samples";
 import type { AnalysisResult, AnalyzeApiResponse, LangCode } from "@/lib/safesign/types";
 import { useManage } from "@/lib/manage/store";
+import { useAuth, saveAnalysisToLog } from "@/lib/auth-store";
+import { navigateModule } from "@/components/auth/AccountWidget";
 
 type Phase = "input" | "analyzing" | "results";
 
@@ -30,12 +32,8 @@ const LANG_STORAGE_KEY = "safesign.lang";
 const MAX_CHARS = 20_000;
 
 export function AnalyzerApp({
-  onSaveToRegistry,
-  onOpenManage,
   onOpenAdvocacy,
 }: {
-  onSaveToRegistry: () => void;
-  onOpenManage: () => void;
   onOpenAdvocacy: () => void;
 }) {
   const [lang, setLang] = useState<LangCode>("en");
@@ -46,7 +44,46 @@ export function AnalyzerApp({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [chatKey, setChatKey] = useState(0); // remounts the chat on new analysis
   const [sampleIndex, setSampleIndex] = useState(0);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "skip">("idle");
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const authUser = useAuth((s) => s.user);
+  const authReady = useAuth((s) => s.ready);
+  const openDialog = useAuth((s) => s.openDialog);
+  const openRiwayat = useAuth((s) => s.openRiwayat);
+
+  const isManageRole =
+    authUser && ["admin", "legal", "manager", "staff"].includes(authUser.role);
+
+  // Buka item riwayat (event dari RiwayatDrawer) → muat hasil + teks kontrak
+  useEffect(() => {
+    const onOpenHistory = async (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      if (!id) return;
+      try {
+        const res = await fetch(`/api/analysis-logs/${id}`, { cache: "no-store" });
+        const data = (await res.json()) as {
+          ok: boolean;
+          log?: { title: string; language: string; inputText: string | null; resultJson: string };
+        };
+        if (!data.ok || !data.log) return;
+        const result = JSON.parse(data.log.resultJson) as AnalysisResult;
+        setContractText(data.log.inputText ?? "");
+        setAnalysis(result);
+        setChatKey((k) => k + 1);
+        setSaveState("saved");
+        setPhase("results");
+        if (isValidLang(data.log.language)) setLang(data.log.language);
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      } catch {
+        // silent
+      }
+    };
+    window.addEventListener("safesign:open-history", onOpenHistory);
+    return () => window.removeEventListener("safesign:open-history", onOpenHistory);
+  }, []);
 
   const dict = getDictionary(lang);
   const meta = getLangMeta(lang);
@@ -127,6 +164,25 @@ export function AnalyzerApp({
       setAnalysis(data.analysis);
       setChatKey((k) => k + 1);
       setPhase("results");
+
+      // Auto-simpan ke Riwayat Kontrak (login & non-penyamaran)
+      const u = useAuth.getState().user;
+      if (u && !u.incognito) {
+        setSaveState("saving");
+        const title = text.split("\n").map((l) => l.trim()).find((l) => l.length > 8)?.slice(0, 70) ?? `Analisis kontrak — ${new Date().toLocaleDateString("id-ID")}`;
+        const r = await saveAnalysisToLog({
+          title,
+          language: lang,
+          sourceType: "manual",
+          inputText: text,
+          resultJson: JSON.stringify(data.analysis),
+          riskLevel: data.analysis.risk_level,
+        });
+        setSaveState(r.ok && r.saved ? "saved" : "skip");
+      } else {
+        setSaveState(u?.incognito ? "skip" : "idle");
+      }
+
       // Scroll to results on mobile
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -144,15 +200,16 @@ export function AnalyzerApp({
       analysisJson: JSON.stringify(analysis),
       source: "file",
     });
-    onSaveToRegistry();
+    navigateModule("manage");
     window.scrollTo({ top: 0 });
-  }, [contractText, analysis, onSaveToRegistry]);
+  }, [contractText, analysis]);
 
   const handleReset = useCallback(() => {
     setContractText("");
     setAnalysis(null);
     setPhase("input");
     setErrorKey(null);
+    setSaveState("idle");
     setSampleIndex(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -186,6 +243,17 @@ export function AnalyzerApp({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {authUser ? (
+              <Button
+                variant="outline"
+                onClick={openRiwayat}
+                className="h-10 rounded-xl border-teal-200 bg-white px-3 text-xs font-bold text-teal-800 hover:bg-teal-50 sm:px-4 sm:text-sm"
+                aria-label="Buka Riwayat Kontrak"
+              >
+                <History className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Riwayat</span>
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               onClick={onOpenAdvocacy}
@@ -194,15 +262,6 @@ export function AnalyzerApp({
             >
               <Megaphone className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Advokasi</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onOpenManage}
-              className="h-10 rounded-xl border-teal-200 bg-white px-3 text-xs font-bold text-teal-800 hover:bg-teal-50 sm:px-4 sm:text-sm"
-            >
-              <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Manajemen Kontrak</span>
-              <span className="sm:hidden">Kelola</span>
             </Button>
             <LanguageSwitcher value={lang} onChange={handleLanguageChange} />
           </div>
@@ -343,6 +402,52 @@ export function AnalyzerApp({
             <>
               <AnalysisResultView analysis={analysis} dict={dict} />
 
+              {/* Status penyimpanan riwayat */}
+              {authReady ? (
+                <div className={`rounded-2xl border p-4 text-sm ${
+                  saveState === "saved"
+                    ? "border-teal-200 bg-teal-50/70 text-teal-900"
+                    : saveState === "saving"
+                      ? "border-slate-200 bg-slate-50 text-slate-600"
+                      : "border-slate-200 bg-white text-slate-600"
+                }`}>
+                  {authUser ? (
+                    authUser.incognito || saveState === "skip" ? (
+                      <p className="flex items-start gap-2 font-medium">
+                        <EyeOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        Mode Penyamaran aktif — analisis ini tidak disimpan dan akan hilang saat Anda keluar.
+                      </p>
+                    ) : saveState === "saving" ? (
+                      <p className="flex items-center gap-2 font-medium">
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        Menyimpan ke Riwayat Kontrak…
+                      </p>
+                    ) : (
+                      <p className="flex flex-wrap items-center gap-2 font-medium">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-700" aria-hidden="true" />
+                        Tersimpan ke Riwayat Kontrak Anda.
+                        <button onClick={openRiwayat} className="font-bold text-teal-700 underline underline-offset-2 hover:text-teal-800">
+                          Lihat Riwayat
+                        </button>
+                      </p>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="font-medium text-slate-700">
+                        Masuk untuk menyimpan hasil analisis di Riwayat Kontrak Anda.
+                      </p>
+                      <Button
+                        onClick={openDialog}
+                        className="h-9 shrink-0 rounded-xl bg-teal-700 px-4 text-xs font-bold text-white hover:bg-teal-800"
+                      >
+                        <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
+                        Masuk / Daftar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
               <ChatBox
                 key={chatKey}
                 contractText={contractText}
@@ -351,23 +456,25 @@ export function AnalyzerApp({
                 dict={dict}
               />
 
-              {/* Save into the Manajemen registry (org-facing module) */}
-              <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-5 text-center">
-                <p className="text-sm font-bold text-teal-900">
-                  Simpan kontrak ini ke Registry Manajemen?
-                </p>
-                <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-teal-800/80">
-                  Teks & hasil analisis akan dibawa ke formulir kontrak — AI mengekstrak data penting
-                  (pihak, tanggal, nilai) secara otomatis, lalu pengingat jatuh tempo aktif.
-                </p>
-                <Button
-                  onClick={handleSaveToRegistry}
-                  className="mt-3 h-11 rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
-                >
-                  <FolderPlus className="h-4 w-4" aria-hidden="true" />
-                  Simpan ke Registry Kontrak
-                </Button>
-              </div>
+              {/* Simpan ke Registry — hanya untuk pengguna modul organisasi */}
+              {isManageRole ? (
+                <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-5 text-center">
+                  <p className="text-sm font-bold text-teal-900">
+                    Simpan kontrak ini ke Registry Manajemen?
+                  </p>
+                  <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-teal-800/80">
+                    Teks & hasil analisis akan dibawa ke formulir kontrak — AI mengekstrak data penting
+                    (pihak, tanggal, nilai) secara otomatis, lalu pengingat jatuh tempo aktif.
+                  </p>
+                  <Button
+                    onClick={handleSaveToRegistry}
+                    className="mt-3 h-11 rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
+                  >
+                    <FolderPlus className="h-4 w-4" aria-hidden="true" />
+                    Simpan ke Registry Kontrak
+                  </Button>
+                </div>
+              ) : null}
 
               <div className="flex justify-center">
                 <Button

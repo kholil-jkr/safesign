@@ -1,5 +1,5 @@
-// SafeSign Manajemen — application shell: sidebar, role switcher, notification bell,
-// and the view router (dashboard / contracts / new / templates / reports / team).
+// SafeSign Manajemen — application shell: sidebar, notifikasi jatuh tempo,
+// identitas akun asli (sesi login), dan router view.
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -30,20 +30,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   useManage,
-  useRestoreUser,
   type ManageView,
 } from "@/lib/manage/store";
 import { ROLE_LABELS, daysLeftLabel, formatDate } from "@/lib/manage/types";
+import { useAuth } from "@/lib/auth-store";
 import { DashboardView } from "./DashboardView";
 import { ContractsView } from "./ContractsView";
 import { ContractDetail } from "./ContractDetail";
@@ -91,27 +84,18 @@ function NavList({ view, onNavigate }: { view: ManageView; onNavigate: (v: Manag
 }
 
 export function ManageApp({ onOpenAnalyzer, onOpenAdvocacy }: { onOpenAnalyzer: () => void; onOpenAdvocacy: () => void }) {
+  const authUser = useAuth((s) => s.user);
   const {
     view,
     setView,
     selectedContractId,
     openContract,
-    closeContract,
-    currentUser,
-    users,
-    setCurrentUser,
-    loadUsers,
     notifications,
     notifOpen,
     setNotifOpen,
     refreshNotifications,
     refreshKey,
   } = useManage();
-  useRestoreUser();
-
-  useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
 
   useEffect(() => {
     void refreshNotifications();
@@ -275,34 +259,16 @@ export function ManageApp({ onOpenAnalyzer, onOpenAdvocacy }: { onOpenAnalyzer: 
               </PopoverContent>
             </Popover>
 
-            {/* Simulated current user / role switcher */}
+            {/* Identitas akun asli (dari sesi login) */}
             <div className="flex items-center gap-2">
               <span className="hidden items-center gap-2 md:flex">
                 <UserRound className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                <Select
-                  value={currentUser.id}
-                  onValueChange={(v) => {
-                    const u = users.find((x) => x.id === v);
-                    if (u) setCurrentUser(u);
-                  }}
-                >
-                  <SelectTrigger
-                    className="h-9 w-auto min-w-40 gap-2 rounded-xl border-slate-700 bg-slate-800 text-xs font-semibold text-white hover:bg-slate-700 focus:ring-teal-500"
-                    aria-label="Ganti peran pengguna"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id} className="text-sm">
-                        {u.name} — {ROLE_LABELS[u.role]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <span className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-white">
+                  {authUser?.name ?? "—"} · {authUser ? ROLE_LABELS[authUser.role] ?? authUser.role : ""}
+                </span>
               </span>
               <span className="flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-xs font-bold text-teal-300 md:hidden">
-                {ROLE_LABELS[currentUser.role]}
+                {authUser ? ROLE_LABELS[authUser.role] ?? authUser.role : "—"}
               </span>
             </div>
           </div>
@@ -315,8 +281,8 @@ export function ManageApp({ onOpenAnalyzer, onOpenAdvocacy }: { onOpenAnalyzer: 
           <NavList view={view} onNavigate={handleNav} />
           <div className="mt-auto rounded-2xl bg-slate-800/60 p-4">
             <p className="text-xs font-bold text-slate-300">Masuk sebagai</p>
-            <p className="mt-1 truncate text-sm font-bold text-white">{currentUser.name}</p>
-            <p className="text-xs font-semibold text-teal-300">{ROLE_LABELS[currentUser.role]}</p>
+            <p className="mt-1 truncate text-sm font-bold text-white">{authUser?.name ?? "—"}</p>
+            <p className="text-xs font-semibold text-teal-300">{authUser ? ROLE_LABELS[authUser.role] ?? authUser.role : ""}</p>
           </div>
         </aside>
 

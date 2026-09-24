@@ -60,7 +60,7 @@ import {
   type MatchedInstitution,
 } from "@/lib/advocacy/types";
 import type { ContractDTO } from "@/lib/manage/types";
-import { useManage } from "@/lib/manage/store";
+import { useAuth } from "@/lib/auth-store";
 
 const CATEGORY_ICONS: Record<CaseCategory, React.ElementType> = {
   SALARY: Banknote,
@@ -83,7 +83,7 @@ const LANG_LABEL: Record<string, string> = {
 
 export function NewCaseView({ onOpenContract }: { onOpenContract: (id: string) => void }) {
   const { prefillDestination, clearPrefill, openCase, bumpRefresh } = useAdvocacy();
-  const currentUser = useManage((s) => s.currentUser);
+  const currentUser = useAuth((s) => s.user);
 
   const [step, setStep] = useState(1);
   // step 1
@@ -185,7 +185,7 @@ export function NewCaseView({ onOpenContract }: { onOpenContract: (id: string) =
         institutionId: selectedInstitution.id,
         contractId: contractId || null,
         attachments: attachments.map((a) => a.name),
-        workerName: anonymous ? null : (linkedContract?.partyB ?? currentUser.name),
+        workerName: anonymous ? null : (linkedContract?.partyB ?? currentUser?.name ?? ""),
       });
       setDraft(res.draft);
     } catch (err) {
@@ -197,7 +197,7 @@ export function NewCaseView({ onOpenContract }: { onOpenContract: (id: string) =
     } finally {
       setGenerating(false);
     }
-  }, [selectedInstitution, category, priority, chronology, originCountry, destinationCountry, anonymous, contractId, attachments, linkedContract, currentUser.name]);
+  }, [selectedInstitution, category, priority, chronology, originCountry, destinationCountry, anonymous, contractId, attachments, linkedContract, currentUser?.name]);
 
   const handleSave = useCallback(async () => {
     if (!draft || !selectedInstitution) return;
@@ -218,8 +218,8 @@ export function NewCaseView({ onOpenContract }: { onOpenContract: (id: string) =
           contractId: contractId || null,
           institutionId: selectedInstitution.id,
           attachments,
-          createdByEmail: currentUser.email,
-          createdByName: currentUser.name,
+          createdByEmail: currentUser?.email ?? "",
+          createdByName: currentUser?.name ?? "",
           draft,
         }),
       });

@@ -336,276 +336,280 @@ async function main() {
 
   const year = new Date().getFullYear();
 
-  // ── Kasus 1: gaji tidak dibayar (Terkirim, follow-up terlambat) ──
-  const c1 = await db.advocacyCase.create({
-    data: {
-      caseNumber: `ADV-${year}-0001`,
-      title: "Gaji 3 bulan tidak dibayar — pabrik elektronik Johor",
-      category: "SALARY",
-      priority: "high",
-      status: "sent",
-      originCountry: "Indonesia",
-      destinationCountry: "Malaysia",
-      chronology:
-        "Saya bekerja sebagai operator produksi di pabrik elektronik di Johor sejak Agustus 2024. Sejak Januari 2026 gaji saya tidak dibayar. Sudah 3 kali minta ke supervisor selalu ditunda dengan alasan 'proses administrasi'. Rekan sekampung saya di pabrik yang sama juga mengalami hal serupa. Saya masih melanjutkan kerja karena takut kehilangan izin kerja.",
-      anonymous: false,
-      institutionId: inst["KBRI KL"],
-      attachmentsJson: JSON.stringify([
-        { name: "Kontrak kerja MY/2024/EL-156", kind: "contract" },
-        { name: "Foto slip gaji Desember 2025", kind: "evidence" },
-      ]),
-      createdByEmail: "rina@safesign.id",
-      createdByName: "Rina Melati (untuk Dewi Lestari)",
-      sentAt: daysFromNow(-20),
-      followUpDue: daysFromNow(-6),
-      timelineJson: JSON.stringify([
-        { at: daysFromNow(-22).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
-        { at: daysFromNow(-22).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KBRI Kuala Lumpur" },
-        { at: daysFromNow(-20).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
-        { at: daysFromNow(-20).toISOString(), event: "SENT", note: "Email terkirim ke KBRI Kuala Lumpur" },
-      ]),
-    },
-  });
-  await db.caseEmail.create({
-    data: {
-      caseId: c1.id,
-      type: "initial",
-      subject: "Pengaduan penunggakan gaji 3 bulan — Pekerja Migran Indonesia di pabrik elektronik Johor",
-      body: `Kepada Yth.
-Atase Tenaga Kerja, KBRI Kuala Lumpur
+  const DEMO = process.env.SEED_DEMO === "1";
+  if (DEMO) {
+      // ── Kasus 1: gaji tidak dibayar (Terkirim, follow-up terlambat) ──
+      const c1 = await db.advocacyCase.create({
+        data: {
+          caseNumber: `ADV-${year}-0001`,
+          title: "Gaji 3 bulan tidak dibayar — pabrik elektronik Johor",
+          category: "SALARY",
+          priority: "high",
+          status: "sent",
+          originCountry: "Indonesia",
+          destinationCountry: "Malaysia",
+          chronology:
+            "Saya bekerja sebagai operator produksi di pabrik elektronik di Johor sejak Agustus 2024. Sejak Januari 2026 gaji saya tidak dibayar. Sudah 3 kali minta ke supervisor selalu ditunda dengan alasan 'proses administrasi'. Rekan sekampung saya di pabrik yang sama juga mengalami hal serupa. Saya masih melanjutkan kerja karena takut kehilangan izin kerja.",
+          anonymous: false,
+          institutionId: inst["KBRI KL"],
+          attachmentsJson: JSON.stringify([
+            { name: "Kontrak kerja MY/2024/EL-156", kind: "contract" },
+            { name: "Foto slip gaji Desember 2025", kind: "evidence" },
+          ]),
+          createdByEmail: "rina@safesign.id",
+          createdByName: "Rina Melati (untuk Dewi Lestari)",
+          sentAt: daysFromNow(-20),
+          followUpDue: daysFromNow(-6),
+          timelineJson: JSON.stringify([
+            { at: daysFromNow(-22).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
+            { at: daysFromNow(-22).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KBRI Kuala Lumpur" },
+            { at: daysFromNow(-20).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
+            { at: daysFromNow(-20).toISOString(), event: "SENT", note: "Email terkirim ke KBRI Kuala Lumpur" },
+          ]),
+        },
+      });
+      await db.caseEmail.create({
+        data: {
+          caseId: c1.id,
+          type: "initial",
+          subject: "Pengaduan penunggakan gaji 3 bulan — Pekerja Migran Indonesia di pabrik elektronik Johor",
+          body: `Kepada Yth.
+    Atase Tenaga Kerja, KBRI Kuala Lumpur
 
-Dengan hormat,
+    Dengan hormat,
 
-Saya, Dewi Lestari, warga negara Indonesia, bekerja sebagai operator produksi di sebuah pabrik elektronik di Johor, Malaysia, berdasarkan kontrak kerja MY/2024/EL-156 sejak bulan Agustus 2024 dengan gaji bulanan RM 1.200.
+    Saya, Dewi Lestari, warga negara Indonesia, bekerja sebagai operator produksi di sebuah pabrik elektronik di Johor, Malaysia, berdasarkan kontrak kerja MY/2024/EL-156 sejak bulan Agustus 2024 dengan gaji bulanan RM 1.200.
 
-Melalui surel ini saya ingin melaporkan bahwa perusahaan tidak membayar gaji saya selama tiga bulan terakhir, yaitu Januari hingga Maret 2026, dengan total tunggakan RM 3.600. Permintaan secara lisan kepada supervisor beberapa kali hanya dijawab dengan penundaan dengan alasan proses administrasi. Rekan kerja saya di departemen yang sama mengalami perlakuan yang sama.
+    Melalui surel ini saya ingin melaporkan bahwa perusahaan tidak membayar gaji saya selama tiga bulan terakhir, yaitu Januari hingga Maret 2026, dengan total tunggakan RM 3.600. Permintaan secara lisan kepada supervisor beberapa kali hanya dijawab dengan penundaan dengan alasan proses administrasi. Rekan kerja saya di departemen yang sama mengalami perlakuan yang sama.
 
-Sehubungan dengan hal tersebut, saya memohon bantuan Bapak/Ibu untuk:
-1. Melakukan koordinasi dan verifikasi dengan perusahaan mengenai tunggakan gaji saya;
-2. Memberikan pendampingan agar hak saya sesuai kontrak dan hukum ketenagakerjaan Malaysia dipenuhi;
-3. Memberikan advis mengenai langkah hukum yang dapat saya temppuh jika perusahaan tetap tidak membayar.
+    Sehubungan dengan hal tersebut, saya memohon bantuan Bapak/Ibu untuk:
+    1. Melakukan koordinasi dan verifikasi dengan perusahaan mengenai tunggakan gaji saya;
+    2. Memberikan pendampingan agar hak saya sesuai kontrak dan hukum ketenagakerjaan Malaysia dipenuhi;
+    3. Memberikan advis mengenai langkah hukum yang dapat saya temppuh jika perusahaan tetap tidak membayar.
 
-Sebagai bahan verifikasi, saya lampirkan:
-1. Salinan kontrak kerja MY/2024/EL-156;
-2. Foto slip gaji Desember 2025 sebagai pembanding pembayaran normal.
+    Sebagai bahan verifikasi, saya lampirkan:
+    1. Salinan kontrak kerja MY/2024/EL-156;
+    2. Foto slip gaji Desember 2025 sebagai pembanding pembayaran normal.
 
-Atas perhatian dan bantuan Bapak/Ibu, saya ucapkan terima kasih.
+    Atas perhatian dan bantuan Bapak/Ibu, saya ucapkan terima kasih.
 
-Hormat saya,
-Dewi Lestari`,
-      bodyUser: null, // bahasa lembaga = bahasa Indonesia (tidak perlu terjemahan)
-      advice: "Siapkan bukti transfer gaji bulan-bulan sebelumnya dan catat setiap percakapan dengan supervisor sebagai bukti tambahan.",
-      attachmentsJson: JSON.stringify(["Kontrak kerja MY/2024/EL-156", "Foto slip gaji Desember 2025"]),
-      status: "sent",
-      sentAt: daysFromNow(-20),
-    },
-  });
+    Hormat saya,
+    Dewi Lestari`,
+          bodyUser: null, // bahasa lembaga = bahasa Indonesia (tidak perlu terjemahan)
+          advice: "Siapkan bukti transfer gaji bulan-bulan sebelumnya dan catat setiap percakapan dengan supervisor sebagai bukti tambahan.",
+          attachmentsJson: JSON.stringify(["Kontrak kerja MY/2024/EL-156", "Foto slip gaji Desember 2025"]),
+          status: "sent",
+          sentAt: daysFromNow(-20),
+        },
+      });
 
-  // ── Kasus 2: kontrak diganti & paspor ditahan (Sedang ditangani) ──
-  const c2 = await db.advocacyCase.create({
-    data: {
-      caseNumber: `ADV-${year}-0002`,
-      title: "Kontrak diganti saat tiba di Riyadh & paspor ditahan majikan",
-      category: "DOCUMENT",
-      priority: "urgent",
-      status: "in_progress",
-      originCountry: "Indonesia",
-      destinationCountry: "Arab Saudi",
-      chronology:
-        "Saya berangkat ke Riyadh sebagai pekerja rumah tangga dengan kontrak gaji SAR 1.800/bulan. Saat tiba di bandara, majikan meminta saya tanda tangan kontrak baru berbahasa Arab dengan gaji SAR 1.200. Paspor saya juga diambil dan disimpan majikan sampai sekarang. Saya tidak berani menolak karena takut dikirim pulang.",
-      anonymous: true,
-      institutionId: inst["KemenP2MI (BP2MI)"],
-      attachmentsJson: JSON.stringify([
-        { name: "Kontrak asli (foto sebelum keberangkatan)", kind: "contract" },
-        { name: "Foto kontrak baru yang ditandatangani di bandara", kind: "evidence" },
-      ]),
-      createdByEmail: "sari@safesign.id",
-      createdByName: "Sari Wulandari (untuk pelapor anonim)",
-      sentAt: daysFromNow(-35),
-      followUpDue: daysFromNow(-21),
-      timelineJson: JSON.stringify([
-        { at: daysFromNow(-37).toISOString(), event: "CREATED", note: "Kasus dibuat (mode anonim)" },
-        { at: daysFromNow(-37).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KemenP2MI" },
-        { at: daysFromNow(-35).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
-        { at: daysFromNow(-35).toISOString(), event: "SENT", note: "Email terkirim ke KemenP2MI" },
-        { at: daysFromNow(-12).toISOString(), event: "STATUS_CHANGED", note: "Dijawab oleh petugas — verifikasi identitas & koordinasi dengan Atase KBRI Riyadh dimulai", by: "sari@safesign.id" },
-      ]),
-    },
-  });
-  await db.caseEmail.create({
-    data: {
-      caseId: c2.id,
-      type: "initial",
-      subject: "[RAHASIA] Laporan penggantian kontrak dan penahanan paspor — pekerja rumah tangga Indonesia di Riyadh",
-      body: `Kepada Yth.
-Unit Pengaduan, Kementerian Perlindungan Pekerja Migran Indonesia / BP2MI
+      // ── Kasus 2: kontrak diganti & paspor ditahan (Sedang ditangani) ──
+      const c2 = await db.advocacyCase.create({
+        data: {
+          caseNumber: `ADV-${year}-0002`,
+          title: "Kontrak diganti saat tiba di Riyadh & paspor ditahan majikan",
+          category: "DOCUMENT",
+          priority: "urgent",
+          status: "in_progress",
+          originCountry: "Indonesia",
+          destinationCountry: "Arab Saudi",
+          chronology:
+            "Saya berangkat ke Riyadh sebagai pekerja rumah tangga dengan kontrak gaji SAR 1.800/bulan. Saat tiba di bandara, majikan meminta saya tanda tangan kontrak baru berbahasa Arab dengan gaji SAR 1.200. Paspor saya juga diambil dan disimpan majikan sampai sekarang. Saya tidak berani menolak karena takut dikirim pulang.",
+          anonymous: true,
+          institutionId: inst["KemenP2MI (BP2MI)"],
+          attachmentsJson: JSON.stringify([
+            { name: "Kontrak asli (foto sebelum keberangkatan)", kind: "contract" },
+            { name: "Foto kontrak baru yang ditandatangani di bandara", kind: "evidence" },
+          ]),
+          createdByEmail: "sari@safesign.id",
+          createdByName: "Sari Wulandari (untuk pelapor anonim)",
+          sentAt: daysFromNow(-35),
+          followUpDue: daysFromNow(-21),
+          timelineJson: JSON.stringify([
+            { at: daysFromNow(-37).toISOString(), event: "CREATED", note: "Kasus dibuat (mode anonim)" },
+            { at: daysFromNow(-37).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KemenP2MI" },
+            { at: daysFromNow(-35).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
+            { at: daysFromNow(-35).toISOString(), event: "SENT", note: "Email terkirim ke KemenP2MI" },
+            { at: daysFromNow(-12).toISOString(), event: "STATUS_CHANGED", note: "Dijawab oleh petugas — verifikasi identitas & koordinasi dengan Atase KBRI Riyadh dimulai", by: "sari@safesign.id" },
+          ]),
+        },
+      });
+      await db.caseEmail.create({
+        data: {
+          caseId: c2.id,
+          type: "initial",
+          subject: "[RAHASIA] Laporan penggantian kontrak dan penahanan paspor — pekerja rumah tangga Indonesia di Riyadh",
+          body: `Kepada Yth.
+    Unit Pengaduan, Kementerian Perlindungan Pekerja Migran Indonesia / BP2MI
 
-Dengan hormat,
+    Dengan hormat,
 
-Saya adalah seorang pekerja migran Indonesia (PRT) yang saat ini berada di Riyadh, Arab Saudi. Karena takut terhadap pembalasan dari majikan, saya memohon identitas saya dijaga kerahasiaannya dan tidak dibocorkan kepada pihak manapun tanpa persetujuan saya.
+    Saya adalah seorang pekerja migran Indonesia (PRT) yang saat ini berada di Riyadh, Arab Saudi. Karena takut terhadap pembalasan dari majikan, saya memohon identitas saya dijaga kerahasiaannya dan tidak dibocorkan kepada pihak manapun tanpa persetujuan saya.
 
-Saya berangkat dari Indonesia dengan kontrak kerja bergaji SAR 1.800 per bulan. Namun saat tiba di Bandara King Khalid, saya diminta menandatangani kontrak baru berbahasa Arab yang tidak saya pahami, dan setelah itu diketahui gaji dalam kontrak baru hanya SAR 1.200 per bulan. Selain itu, paspor saya disimpan oleh majikan sejak hari kedua saya bekerja dan belum dikembalikan hingga surat ini dibuat.
+    Saya berangkat dari Indonesia dengan kontrak kerja bergaji SAR 1.800 per bulan. Namun saat tiba di Bandara King Khalid, saya diminta menandatangani kontrak baru berbahasa Arab yang tidak saya pahami, dan setelah itu diketahui gaji dalam kontrak baru hanya SAR 1.200 per bulan. Selain itu, paspor saya disimpan oleh majikan sejak hari kedua saya bekerja dan belum dikembalikan hingga surat ini dibuat.
 
-Saya melaporkan dugaan:
-1. Penggantian kontrak (contract substitution) tanpa persetujuan yang sah;
-2. Penahanan paspor oleh majikan, yang bertentangan dengan prinsip perlindungan PMI.
+    Saya melaporkan dugaan:
+    1. Penggantian kontrak (contract substitution) tanpa persetujuan yang sah;
+    2. Penahanan paspor oleh majikan, yang bertentangan dengan prinsip perlindungan PMI.
 
-Sehubungan dengan hal tersebut, saya memohon:
-1. Intervensi dan mediasi melalui Atase Tenaga Kerja KBRI Riyadh agar kontrak saya dikembalikan sesuai ketentuan awal;
-2. Bantuan pengambilalihan paspor saya sesuai prinsip dokumen keimigrasian dipegang sendiri oleh pekerja;
-3. Perlindungan dari ancaman pengiriman paksa ke Indonesia selama proses mediasi berlangsung.
+    Sehubungan dengan hal tersebut, saya memohon:
+    1. Intervensi dan mediasi melalui Atase Tenaga Kerja KBRI Riyadh agar kontrak saya dikembalikan sesuai ketentuan awal;
+    2. Bantuan pengambilalihan paspor saya sesuai prinsip dokumen keimigrasian dipegang sendiri oleh pekerja;
+    3. Perlindungan dari ancaman pengiriman paksa ke Indonesia selama proses mediasi berlangsung.
 
-Lampiran yang saya sertakan:
-1. Foto kontrak asli sebelum keberangkatan;
-2. Foto kontrak baru yang ditandatangani di bandara.
+    Lampiran yang saya sertakan:
+    1. Foto kontrak asli sebelum keberangkatan;
+    2. Foto kontrak baru yang ditandatangani di bandara.
 
-Demikian laporan ini saya sampaikan. Atas perhatian dan perlindungan yang diberikan, saya ucapkan terima kasih.
+    Demikian laporan ini saya sampaikan. Atas perhatian dan perlindungan yang diberikan, saya ucapkan terima kasih.
 
-Hormat saya,
-(Pelapor meminta kerahasiaan identitas)`,
-      bodyUser: null,
-      advice: "Jangan tanda tangani dokumen apa pun lagi sebelum ada pendampingan. Simpan bukti foto semua dokumen di tempat aman.",
-      attachmentsJson: JSON.stringify(["Kontrak asli (foto sebelum keberangkatan)", "Foto kontrak baru yang ditandatangani di bandara"]),
-      status: "sent",
-      sentAt: daysFromNow(-35),
-    },
-  });
+    Hormat saya,
+    (Pelapor meminta kerahasiaan identitas)`,
+          bodyUser: null,
+          advice: "Jangan tanda tangani dokumen apa pun lagi sebelum ada pendampingan. Simpan bukti foto semua dokumen di tempat aman.",
+          attachmentsJson: JSON.stringify(["Kontrak asli (foto sebelum keberangkatan)", "Foto kontrak baru yang ditandatangani di bandara"]),
+          status: "sent",
+          sentAt: daysFromNow(-35),
+        },
+      });
 
-  // ── Kasus 3: pelecehan di Hong Kong (Selesai) ──
-  const c3 = await db.advocacyCase.create({
-    data: {
-      caseNumber: `ADV-${year}-0003`,
-      title: "Pelecehan verbal berulang oleh majikan — Hong Kong",
-      category: "ABUSE",
-      priority: "high",
-      status: "resolved",
-      originCountry: "Indonesia",
-      destinationCountry: "Hong Kong",
-      chronology:
-        "Majikan sering membentak dengan kata-kata kasar dan mengancam mengirim saya pulang setiap kali saya minta hari libur sesuai kontrak. Sekali majikan melempar piring ke arah saya.",
-      anonymous: false,
-      institutionId: inst["KJRI Hong Kong"],
-      attachmentsJson: JSON.stringify([{ name: "Rekaman percakapan singkat via telepon", kind: "evidence" }]),
-      createdByEmail: "rina@safesign.id",
-      createdByName: "Rina Melati (untuk Maria Lourdes)",
-      sentAt: daysFromNow(-60),
-      followUpDue: daysFromNow(-46),
-      timelineJson: JSON.stringify([
-        { at: daysFromNow(-62).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
-        { at: daysFromNow(-62).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KJRI Hong Kong" },
-        { at: daysFromNow(-60).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
-        { at: daysFromNow(-60).toISOString(), event: "SENT", note: "Email terkirim ke KJRI Hong Kong" },
-        { at: daysFromNow(-30).toISOString(), event: "STATUS_CHANGED", note: "Mediasi bersama NGO mitra selesai — pekerja dipindahkan ke majikan baru, by: sari@safesign.id" },
-        { at: daysFromNow(-28).toISOString(), event: "STATUS_CHANGED", note: "Kasus ditandai selesai oleh pengguna", by: "rina@safesign.id" },
-      ]),
-    },
-  });
-  await db.caseEmail.create({
-    data: {
-      caseId: c3.id,
-      type: "initial",
-      subject: "Laporan pelecehan verbal berulang oleh majikan — PRT Indonesia di Hong Kong",
-      body: `Kepada Yth.
-Bagian Perlindungan WNI, KJRI Hong Kong
+      // ── Kasus 3: pelecehan di Hong Kong (Selesai) ──
+      const c3 = await db.advocacyCase.create({
+        data: {
+          caseNumber: `ADV-${year}-0003`,
+          title: "Pelecehan verbal berulang oleh majikan — Hong Kong",
+          category: "ABUSE",
+          priority: "high",
+          status: "resolved",
+          originCountry: "Indonesia",
+          destinationCountry: "Hong Kong",
+          chronology:
+            "Majikan sering membentak dengan kata-kata kasar dan mengancam mengirim saya pulang setiap kali saya minta hari libur sesuai kontrak. Sekali majikan melempar piring ke arah saya.",
+          anonymous: false,
+          institutionId: inst["KJRI Hong Kong"],
+          attachmentsJson: JSON.stringify([{ name: "Rekaman percakapan singkat via telepon", kind: "evidence" }]),
+          createdByEmail: "rina@safesign.id",
+          createdByName: "Rina Melati (untuk Maria Lourdes)",
+          sentAt: daysFromNow(-60),
+          followUpDue: daysFromNow(-46),
+          timelineJson: JSON.stringify([
+            { at: daysFromNow(-62).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
+            { at: daysFromNow(-62).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke KJRI Hong Kong" },
+            { at: daysFromNow(-60).toISOString(), event: "APPROVED", note: "Pengguna mengizinkan pengiriman email" },
+            { at: daysFromNow(-60).toISOString(), event: "SENT", note: "Email terkirim ke KJRI Hong Kong" },
+            { at: daysFromNow(-30).toISOString(), event: "STATUS_CHANGED", note: "Mediasi bersama NGO mitra selesai — pekerja dipindahkan ke majikan baru, by: sari@safesign.id" },
+            { at: daysFromNow(-28).toISOString(), event: "STATUS_CHANGED", note: "Kasus ditandai selesai oleh pengguna", by: "rina@safesign.id" },
+          ]),
+        },
+      });
+      await db.caseEmail.create({
+        data: {
+          caseId: c3.id,
+          type: "initial",
+          subject: "Laporan pelecehan verbal berulang oleh majikan — PRT Indonesia di Hong Kong",
+          body: `Kepada Yth.
+    Bagian Perlindungan WNI, KJRI Hong Kong
 
-Dengan hormat,
+    Dengan hormat,
 
-Saya, Maria Lourdes, warga negara Indonesia, bekerja sebagai pekerja rumah tangga (domestic helper) di Hong Kong sejak tahun 2025.
+    Saya, Maria Lourdes, warga negara Indonesia, bekerja sebagai pekerja rumah tangga (domestic helper) di Hong Kong sejak tahun 2025.
 
-Melalui surel ini saya melaporkan bahwa majikan saya berulang kali melakukan pelecehan verbal — membentak dengan kata-kata kasar dan mengancam mengirim saya pulang setiap kali saya mengajukan hak hari istirahat mingguan sesuai kontrak. Pada satu kesempatan, majikan melempar piring ke arah saya sehingga saya merasa tidak aman tinggal di rumah tersebut.
+    Melalui surel ini saya melaporkan bahwa majikan saya berulang kali melakukan pelecehan verbal — membentak dengan kata-kata kasar dan mengancam mengirim saya pulang setiap kali saya mengajukan hak hari istirahat mingguan sesuai kontrak. Pada satu kesempatan, majikan melempar piring ke arah saya sehingga saya merasa tidak aman tinggal di rumah tersebut.
 
-Sehubungan dengan hal tersebut, saya memohon:
-1. Pendampingan dari KJRI untuk melaporkan kejadian ini kepada Labour Department Hong Kong;
-2. Bantuan pencarian penampungan sementara (shelter) bila diperlukan;
-3. Konsultasi mengenai hak saya untuk mengganti majikan sesuai ketentuan Hong Kong.
+    Sehubungan dengan hal tersebut, saya memohon:
+    1. Pendampingan dari KJRI untuk melaporkan kejadian ini kepada Labour Department Hong Kong;
+    2. Bantuan pencarian penampungan sementara (shelter) bila diperlukan;
+    3. Konsultasi mengenai hak saya untuk mengganti majikan sesuai ketentuan Hong Kong.
 
-Saya lampirkan rekaman singkat percakapan sebagai bukti pendukung.
+    Saya lampirkan rekaman singkat percakapan sebagai bukti pendukung.
 
-Atas perhatian Bapak/Ibu, saya ucapkan terima kasih.
+    Atas perhatian Bapak/Ibu, saya ucapkan terima kasih.
 
-Hormat saya,
-Maria Lourdes`,
-      bodyUser: null,
-      advice: "Di Hong Kong, Anda berhak atas 1 hari libur setiap minggu dan berhak mengganti majikan — jangan menandatangani pengakuan apa pun dalam bahasa yang tidak dipahami.",
-      attachmentsJson: JSON.stringify(["Rekaman percakapan singkat via telepon"]),
-      status: "sent",
-      sentAt: daysFromNow(-60),
-    },
-  });
+    Hormat saya,
+    Maria Lourdes`,
+          bodyUser: null,
+          advice: "Di Hong Kong, Anda berhak atas 1 hari libur setiap minggu dan berhak mengganti majikan — jangan menandatangani pengakuan apa pun dalam bahasa yang tidak dipahami.",
+          attachmentsJson: JSON.stringify(["Rekaman percakapan singkat via telepon"]),
+          status: "sent",
+          sentAt: daysFromNow(-60),
+        },
+      });
 
-  // ── Kasus 4: draf ke ILO (belum dikirim, contoh bahasa Inggris) ──
-  const c4 = await db.advocacyCase.create({
-    data: {
-      caseNumber: `ADV-${year}-0004`,
-      title: "Upah di bawah Minimum Allowable Wage & potongan ilegal — Hong Kong",
-      category: "SALARY",
-      priority: "medium",
-      status: "draft",
-      originCountry: "Indonesia",
-      destinationCountry: "Hong Kong",
-      chronology:
-        "Kontrak saya menyebut gaji HKD 5.000 per bulan, tapi yang diterima hanya HKD 4.300 dengan alasan potongan makan dan agen. Agency juga memotong HKD 700 tiap bulan selama 6 bulan pertama.",
-      anonymous: false,
-      institutionId: inst["ILO"],
-      attachmentsJson: JSON.stringify([
-        { name: "Kontrak HK/2025/DH-112", kind: "contract" },
-        { name: "Rekaman rekening bank 3 bulan terakhir", kind: "evidence" },
-      ]),
-      createdByEmail: "budi@safesign.id",
-      createdByName: "Budi Santoso (untuk Maria Lourdes)",
-      timelineJson: JSON.stringify([
-        { at: daysFromNow(-3).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
-        { at: daysFromNow(-3).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke ILO (bahasa Inggris)" },
-      ]),
-    },
-  });
-  await db.caseEmail.create({
-    data: {
-      caseId: c4.id,
-      type: "initial",
-      subject: "Complaint: systemic underpayment of Indonesian domestic helpers in Hong Kong — wage below Minimum Allowable Wage",
-      body: `Dear Sir or Madam,
+      // ── Kasus 4: draf ke ILO (belum dikirim, contoh bahasa Inggris) ──
+      const c4 = await db.advocacyCase.create({
+        data: {
+          caseNumber: `ADV-${year}-0004`,
+          title: "Upah di bawah Minimum Allowable Wage & potongan ilegal — Hong Kong",
+          category: "SALARY",
+          priority: "medium",
+          status: "draft",
+          originCountry: "Indonesia",
+          destinationCountry: "Hong Kong",
+          chronology:
+            "Kontrak saya menyebut gaji HKD 5.000 per bulan, tapi yang diterima hanya HKD 4.300 dengan alasan potongan makan dan agen. Agency juga memotong HKD 700 tiap bulan selama 6 bulan pertama.",
+          anonymous: false,
+          institutionId: inst["ILO"],
+          attachmentsJson: JSON.stringify([
+            { name: "Kontrak HK/2025/DH-112", kind: "contract" },
+            { name: "Rekaman rekening bank 3 bulan terakhir", kind: "evidence" },
+          ]),
+          createdByEmail: "budi@safesign.id",
+          createdByName: "Budi Santoso (untuk Maria Lourdes)",
+          timelineJson: JSON.stringify([
+            { at: daysFromNow(-3).toISOString(), event: "CREATED", note: "Kasus dibuat melalui wizard Advokasi" },
+            { at: daysFromNow(-3).toISOString(), event: "DRAFT_CREATED", note: "AI menyusun draf email ke ILO (bahasa Inggris)" },
+          ]),
+        },
+      });
+      await db.caseEmail.create({
+        data: {
+          caseId: c4.id,
+          type: "initial",
+          subject: "Complaint: systemic underpayment of Indonesian domestic helpers in Hong Kong — wage below Minimum Allowable Wage",
+          body: `Dear Sir or Madam,
 
-I am writing on behalf of an Indonesian migrant domestic worker employed in Hong Kong to bring to your attention a pattern of wage abuse that we believe may be systemic among certain placement agencies.
+    I am writing on behalf of an Indonesian migrant domestic worker employed in Hong Kong to bring to your attention a pattern of wage abuse that we believe may be systemic among certain placement agencies.
 
-The worker's signed employment contract (No. HK/2025/DH-112) stipulates a monthly wage of HKD 5,000, in line with Hong Kong's Minimum Allowable Wage for foreign domestic helpers. However, she has received only HKD 4,300 per month, with the difference deducted as "food and agency fees". In addition, her placement agency deducted HKD 700 monthly during her first six months of employment, reducing her effective wage to approximately HKD 3,600 — far below the statutory minimum.
+    The worker's signed employment contract (No. HK/2025/DH-112) stipulates a monthly wage of HKD 5,000, in line with Hong Kong's Minimum Allowable Wage for foreign domestic helpers. However, she has received only HKD 4,300 per month, with the difference deducted as "food and agency fees". In addition, her placement agency deducted HKD 700 monthly during her first six months of employment, reducing her effective wage to approximately HKD 3,600 — far below the statutory minimum.
 
-These practices raise concerns under ILO standards on protection of wages and on private employment agencies, and may constitute debt bondage when combined with passport-style control over the worker's earnings.
+    These practices raise concerns under ILO standards on protection of wages and on private employment agencies, and may constitute debt bondage when combined with passport-style control over the worker's earnings.
 
-We respectfully request:
-1. Guidance on submitting this pattern to the relevant ILO supervisory mechanisms;
-2. Any recommendations for international referral pathways available to the worker.
+    We respectfully request:
+    1. Guidance on submitting this pattern to the relevant ILO supervisory mechanisms;
+    2. Any recommendations for international referral pathways available to the worker.
 
-Attached for reference:
-1. Signed employment contract No. HK/2025/DH-112;
-2. Three months of bank statement records.
+    Attached for reference:
+    1. Signed employment contract No. HK/2025/DH-112;
+    2. Three months of bank statement records.
 
-Thank you for your attention to this matter.
+    Thank you for your attention to this matter.
 
-Respectfully submitted,
-SafeSign Advocacy (on behalf of the worker)`,
-      bodyUser: `Yth. Bapak/Ibu,
+    Respectfully submitted,
+    SafeSign Advocacy (on behalf of the worker)`,
+          bodyUser: `Yth. Bapak/Ibu,
 
-Saya menulis atas nama seorang pekerja rumah tangga Indonesia di Hong Kong untuk menyampaikan pola penyalahgunaan upah yang kami duga bersifat sistemik di antara agen-agen penempatan tertentu.
+    Saya menulis atas nama seorang pekerja rumah tangga Indonesia di Hong Kong untuk menyampaikan pola penyalahgunaan upah yang kami duga bersifat sistemik di antara agen-agen penempatan tertentu.
 
-Kontrak kerja pekerja tersebut (No. HK/2025/DH-112) menyebutkan gaji bulanan HKD 5.000, sesuai Upah Minimum yang Diizinkan di Hong Kong. Namun ia hanya menerima HKD 4.300 per bulan, dengan selisih dipotong sebagai "biaya makan dan agen". Selain itu, agen penempatan memotong HKD 700 setiap bulan selama enam bulan pertama, sehingga gaji efektifnya hanya sekitar HKD 3.600 — jauh di bawah upah minimum.
+    Kontrak kerja pekerja tersebut (No. HK/2025/DH-112) menyebutkan gaji bulanan HKD 5.000, sesuai Upah Minimum yang Diizinkan di Hong Kong. Namun ia hanya menerima HKD 4.300 per bulan, dengan selisih dipotong sebagai "biaya makan dan agen". Selain itu, agen penempatan memotong HKD 700 setiap bulan selama enam bulan pertama, sehingga gaji efektifnya hanya sekitar HKD 3.600 — jauh di bawah upah minimum.
 
-Praktik ini menimbulkan keprihatinan berdasarkan standar ILO mengenai perlindungan upah dan lembaga penempatan swasta, dan berpotensi menjadi perbudakan utang.
+    Praktik ini menimbulkan keprihatinan berdasarkan standar ILO mengenai perlindungan upah dan lembaga penempatan swasta, dan berpotensi menjadi perbudakan utang.
 
-Kami memohon:
-1. Panduan untuk menyampaikan pola ini kepada mekanisme pengawasan ILO;
-2. Rekomendasi jalur rujukan internasional yang tersedia bagi pekerja.
+    Kami memohon:
+    1. Panduan untuk menyampaikan pola ini kepada mekanisme pengawasan ILO;
+    2. Rekomendasi jalur rujukan internasional yang tersedia bagi pekerja.
 
-Terlampir:
-1. Salinan kontrak kerja No. HK/2025/DH-112;
-2. Rekening bank tiga bulan terakhir.
+    Terlampir:
+    1. Salinan kontrak kerja No. HK/2025/DH-112;
+    2. Rekening bank tiga bulan terakhir.
 
-Atas perhatian, kami ucapkan terima kasih.`,
-      advice: "Untuk lembaga internasional seperti ILO, sertakan bukti yang menunjukkan POLA (bukan hanya kasus pribadi) agar laporan lebih kuat. Pertimbangkan juga melapor ke HK Labour Department secara paralel.",
-      attachmentsJson: JSON.stringify(["Kontrak HK/2025/DH-112", "Rekaman rekening bank 3 bulan terakhir"]),
-      status: "draft",
-    },
-  });
+    Atas perhatian, kami ucapkan terima kasih.`,
+          advice: "Untuk lembaga internasional seperti ILO, sertakan bukti yang menunjukkan POLA (bukan hanya kasus pribadi) agar laporan lebih kuat. Pertimbangkan juga melapor ke HK Labour Department secara paralel.",
+          attachmentsJson: JSON.stringify(["Kontrak HK/2025/DH-112", "Rekaman rekening bank 3 bulan terakhir"]),
+          status: "draft",
+        },
+      });
+
+  }
 
   const counts = {
     institutions: await db.institution.count(),

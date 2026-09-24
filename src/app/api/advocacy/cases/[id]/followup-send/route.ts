@@ -6,6 +6,8 @@ import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { serializeCase } from "@/lib/advocacy/serialize";
 import type { TimelineEntry } from "@/lib/advocacy/types";
+import { getSessionUser } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,6 +17,14 @@ function smtpConfigured(): boolean {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ ok: false, error: "LOGIN_REQUIRED" }, { status: 401 });
+
+  const rl = rateLimit(`send-email:${user.id}`, 10, 3_600_000);
+  if (!rl.ok) {
+    return NextResponse.json({ ok: false, error: "RATE_LIMITED", retryAfter: rl.retryAfter }, { status: 429 });
+  }
+
   try {
     const { id } = await params;
     const body = (await req.json()) as Record<string, unknown>;
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const c = await db.advocacyCase.findUnique({ where: { id }, include: { institution: true, emails: true } });
-    if (!c) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+    if (!c || c.userId !== user.id) return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
     if (c.status !== "sent" && c.status !== "followed_up") {
       return NextResponse.json({ ok: false, error: "CASE_NOT_SENT" }, { status: 400 });
     }
@@ -53,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         await transporter.sendMail({
           from: process.env.SMTP_FROM!,
           to: c.institution.email!,
-          replyTo: typeof body.replyTo === "string" ? body.replyTo.slice(0, 200) : process.env.SMTP_FROM!,
+          replyTo: user.email,
           subject,
           text: emailBody,
         });

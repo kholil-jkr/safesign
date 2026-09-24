@@ -11,13 +11,38 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  name      String
-  role      String     @default("staff") // admin | legal | manager | staff
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  contracts Contract[] @relation("CreatedContracts")
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  passwordHash String? // null → akun OAuth (Google) tanpa password
+  provider     String        @default("credentials") // credentials | google
+  image        String? // avatar (URL)
+  role         String        @default("user") // admin | legal | manager | staff | user
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  contracts    Contract[]    @relation("CreatedContracts")
+  analysisLogs AnalysisLog[]
+  advocacyCases AdvocacyCase[]
+}
+
+// ─── Riwayat Kontrak (Analyzer) ────────────────────────────────────────────────
+// Seperti "log chat" pada chatbot AI: satu user bisa punya banyak hasil analisis
+// kontrak, membuka ulang, dan menghapusnya. Analisis saat Mode Penyamaran aktif
+// ditandai incognito=true dan DIHAPUS permanen saat user logout.
+model AnalysisLog {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String // judul kontrak / nama file / cuplikan teks
+  language    String   @default("en") // bahasa analisis (en/id/...)
+  sourceType  String? // camera | photo | file | cloud | template | sample | manual
+  inputText   String? // teks kontrak asli (dipangkas)
+  resultJson  String // hasil analisis AI (AnalysisResult JSON)
+  riskLevel   String? // low | medium | high
+  incognito   Boolean  @default(false) // true = hapus permanen saat logout
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Contract {
@@ -126,6 +151,7 @@ model Institution {
 model AdvocacyCase {
   id                 String       @id @default(cuid())
   caseNumber         String       @unique
+  userId             String? // pemilik kasus (user login); null = warisan data lama
   title              String
   category           String // SALARY | ABUSE | TRAFFICKING | CONTRACT | REPATRIATION | PLACEMENT | DOCUMENT | WELFARE
   priority           String       @default("medium") // low | medium | high | urgent
@@ -145,6 +171,7 @@ model AdvocacyCase {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
   institution        Institution  @relation(fields: [institutionId], references: [id])
+  user               User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   emails             CaseEmail[]
 }
 
@@ -157,8 +184,12 @@ model CaseEmail {
   bodyUser         String? // terjemahan ke bahasa user
   advice           String?
   attachmentsJson  String       @default("[]")
-  status           String       @default("draft") // draft | sent
+  status           String       @default("draft") // draft | sent | replied
   sentAt           DateTime?
+  repliedAt        DateTime? // waktu balasan lembaga diterima (webhook inbound)
+  replyFrom        String? // pengirim balasan
+  replyText        String? // isi balasan (dari webhook inbound email)
+  messageId        String? // SMTP Message-ID (untuk mencocokkan balasan)
   createdAt        DateTime     @default(now())
   case             AdvocacyCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
 }

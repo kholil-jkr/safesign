@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { serializeContract } from "@/lib/manage/serialize";
 import type { Prisma } from "@prisma/client";
+import { getSessionUser, isManageRole } from "@/lib/auth";
+
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,11 @@ const VALID_CATEGORIES = ["employment", "vendor", "lease", "nda", "service", "ot
 const VALID_STATUSES = ["draft", "pending_approval", "approved", "rejected", "terminated"];
 
 export async function GET(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const sp = req.nextUrl.searchParams;
     const q = (sp.get("q") ?? "").trim(); // keep original case; DB search is case-insensitive
@@ -78,6 +85,11 @@ function toDateOrNull(s: unknown): Date | null {
 }
 
 export async function POST(req: NextRequest) {
+    const authUser = await getSessionUser();
+    if (!authUser || !isManageRole(authUser.role)) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+
   try {
     const body = (await req.json()) as Record<string, unknown>;
     const title = String(body.title ?? "").trim();

@@ -9,7 +9,7 @@ import type {
   MatchedInstitution,
 } from "./types";
 
-export type AdvocacyView = "cases" | "new" | "institutions" | "rights" | "sos";
+export type AdvocacyView = "cases" | "new" | "institutions" | "rights" | "sos" | "inbox";
 
 interface AdvocacyState {
   view: AdvocacyView;
