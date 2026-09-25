@@ -39,11 +39,13 @@ export function AuthDialog() {
           ? "Periksa kembali isian Anda (password minimal 8 karakter, email valid)."
           : error === "RATE_LIMITED"
             ? "Terlalu banyak percobaan. Coba lagi dalam beberapa menit."
-            : error === "JARINGAN"
-              ? "Koneksi bermasalah. Coba lagi."
-              : error
-                ? "Terjadi kesalahan. Coba lagi."
-                : null;
+            : error === "ACCOUNT_LOCKED"
+              ? "Akun sementara terkunci karena terlalu banyak percobaan gagal. Tunggu ±15 menit, lalu coba lagi."
+              : error === "JARINGAN"
+                ? "Koneksi bermasalah. Coba lagi."
+                : error
+                  ? "Terjadi kesalahan. Coba lagi."
+                  : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

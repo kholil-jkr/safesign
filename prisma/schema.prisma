@@ -18,6 +18,8 @@ model User {
   provider     String        @default("credentials") // credentials | google
   image        String? // avatar (URL)
   role         String        @default("user") // admin | legal | manager | staff | user
+  failedLogins Int           @default(0) // counter brute-force (lintas instance, tersimpan di DB)
+  lockedUntil  DateTime? // null / sudah lewat = tidak terkunci
   lastLoginAt  DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

@@ -28,11 +28,37 @@ export async function POST(req: NextRequest) {
 
     const u = await db.user.findUnique({ where: { email } });
     // Pesan error generik — jangan bocorkan apakah email terdaftar
-    if (!u || !u.passwordHash || !(await verifyPassword(password, u.passwordHash))) {
+    if (!u || !u.passwordHash) {
       return NextResponse.json({ ok: false, error: "WRONG_CREDENTIALS" }, { status: 401 });
     }
 
-    await db.user.update({ where: { id: u.id }, data: { lastLoginAt: new Date() } });
+    const passwordOk = await verifyPassword(password, u.passwordHash);
+    if (!passwordOk) {
+      // Lockout berbasis DB — bekerja lintas instance serverless (in-memory limiter
+      // hanya best-effort). 10x gagal → kunci akun 15 menit. Saat terkunci,
+      // kegagalan baru TIDAK memperpanjang kunci (mencegah DoS permanen).
+      const now = new Date();
+      const isLocked = u.lockedUntil ? u.lockedUntil > now : false;
+      if (!isLocked) {
+        const fails = u.failedLogins + 1;
+        if (fails >= 10) {
+          await db.user.update({ where: { id: u.id }, data: { failedLogins: 0, lockedUntil: new Date(now.getTime() + 15 * 60_000) } });
+        } else {
+          await db.user.update({ where: { id: u.id }, data: { failedLogins: fails } });
+        }
+      }
+      return NextResponse.json({ ok: false, error: "WRONG_CREDENTIALS" }, { status: 401 });
+    }
+
+    // Password benar tapi akun terkunci → tolak + beri tahu durasi tunggu.
+    // (Penebak yang tidak tahu password tetap hanya melihat WRONG_CREDENTIALS —
+    // tidak ada kebocoran info apakah akun terkunci/terdaftar.)
+    if (u.lockedUntil && u.lockedUntil > new Date()) {
+      const retryAfter = Math.ceil((u.lockedUntil.getTime() - Date.now()) / 60_000);
+      return NextResponse.json({ ok: false, error: "ACCOUNT_LOCKED", retryAfter }, { status: 423 });
+    }
+
+    await db.user.update({ where: { id: u.id }, data: { failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() } });
     void sweepStaleIncognitoLogs();
 
     const token = await createSessionToken({ id: u.id, email: u.email, name: u.name, role: u.role, provider: u.provider });
